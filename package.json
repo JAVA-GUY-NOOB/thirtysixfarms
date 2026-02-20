@@ -1,0 +1,16 @@
+{
+  "name": "thirtysixfarms-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "cd farmcity-frontend && npm start",
+    "test": "cd farmcity-frontend && npm test",
+    "build": "cd farmcity-frontend && npm run build"
+  },
+  "workspaces": [
+    "farmcity-frontend"
+  ],
+  "devDependencies": {
+    "react-scripts": "^5.0.1"
+  }
+}

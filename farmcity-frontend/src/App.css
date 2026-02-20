@@ -1,0 +1,49 @@
+:root {
+  --accent: #4caf50;
+  --accent-600: #2e7d32;
+  --accent-50: #f0fdf4;
+  --gold: #e3c770;
+  --ink: #1f2937;
+  --muted: #6b7280;
+  --border: #eef2f3;
+  --panel: #ffffff;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background:
+    radial-gradient(1000px 400px at -10% -10%, rgba(227,199,112,0.15), transparent 60%),
+    radial-gradient(1000px 400px at 110% 10%, rgba(76,175,80,0.12), transparent 60%),
+    #f8fafc;
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+.App {
+  text-align: center;
+  padding: 2rem;
+  background: var(--panel);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 24px rgba(16,24,40,0.06);
+  margin: 2rem auto;
+  max-width: 1000px;
+}
+
+.golden-btn {
+  background: linear-gradient(90deg, var(--gold) 60%, var(--accent) 100%);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 10px;
+  padding: 0.7rem 1.4rem;
+  font-size: 1rem;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(16,24,40,0.08);
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .2s ease;
+}
+.golden-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(16,24,40,0.12);
+}

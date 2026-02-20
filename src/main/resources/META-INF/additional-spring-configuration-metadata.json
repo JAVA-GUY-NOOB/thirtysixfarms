@@ -1,0 +1,11 @@
+{
+  "properties": [
+    {"name": "mpesa.consumer-key", "type": "java.lang.String", "description": "Safaricom M-Pesa API consumer key."},
+    {"name": "mpesa.consumer-secret", "type": "java.lang.String", "description": "Safaricom M-Pesa API consumer secret."},
+    {"name": "mpesa.shortcode", "type": "java.lang.String", "description": "Business shortcode / paybill."},
+    {"name": "mpesa.passkey", "type": "java.lang.String", "description": "Lipa na M-Pesa Online passkey."},
+    {"name": "mpesa.callback-url", "type": "java.lang.String", "description": "Callback endpoint exposed publicly for STK push results."},
+    {"name": "mpesa.environment", "type": "java.lang.String", "description": "Environment: sandbox or production."},
+    {"name": "mpesa.base-url", "type": "java.lang.String", "description": "Base URL for M-Pesa APIs (sandbox or production)."}
+  ]
+}
