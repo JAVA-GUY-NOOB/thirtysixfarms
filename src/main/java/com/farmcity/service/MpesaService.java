@@ -23,8 +23,6 @@ import com.farmcity.entity.MpesaTransaction;
 import com.farmcity.repository.CustomerOrderRepository;
 import com.farmcity.repository.MpesaTransactionRepository;
 
-import ch.qos.logback.core.joran.conditional.ElseAction;
-
 @Service
 public class MpesaService {
     private static final Logger log = LoggerFactory.getLogger(MpesaService.class);
@@ -137,13 +135,25 @@ public class MpesaService {
     public void processCallback(Map<String, Object> callback) {
         if (callback == null) return;
         Map<?,?> stk = extractStkCallback(callback);
-        if (stk != null) {
-            log.info("[Mpesa] Processing callback for checkoutRequestId={}", stk.get(CHECKOUT_REQUEST_ID));
-        } else {
-            log.warn("[Mpesa] No stkCallback found in callback body={}", callback); 
-        } ElseAction a = new ElseAction();{  
+        if (stk == null) {
+            log.warn("[Mpesa] No stkCallback found in callback body={}", callback);
             return;
         }
+
+        String checkoutRequestId = String.valueOf(stk.get(CHECKOUT_REQUEST_ID));
+        log.info("[Mpesa] Processing callback for checkoutRequestId={}", checkoutRequestId);
+
+        if (checkoutRequestId == null || checkoutRequestId.isBlank()) {
+            log.warn("[Mpesa] Missing checkoutRequestId in stkCallback={}", stk);
+            return;
+        }
+
+        repo.findByCheckoutRequestId(checkoutRequestId).ifPresentOrElse(tx -> {
+            updateTransactionFromCallback(tx, stk, checkoutRequestId);
+            updateOrderFromCallback(tx, stk);
+            extractAndSetReceiptNumber(tx, stk);
+            repo.save(tx);
+        }, () -> log.warn("[Mpesa] No transaction found for checkoutRequestId={}", checkoutRequestId));
     }
 
     private Map<?,?> extractStkCallback(Map<String, Object> callback) {
