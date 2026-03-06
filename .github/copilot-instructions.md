@@ -1,4 +1,7 @@
-<!-- Use this file to provide workspace-specific custom instructions to Copilot. For more details, visit https://code.visualstudio.com/docs/copilot/copilot-customization#_use-a-githubcopilotinstructionsmd-file -->
+<!-- Use this file to provide workspace-specific custom instructions to Copilot. For more details, visit https://code'\visualstudio.com/docs/copilot/copilot-customization#_use-a-githubcopilotinstructionsmd-fi
+
+/\\\\\\\\\\\\
+"
 - [ ] Verify that the copilot-instructions.md file in the .github directory is created.
 
 - [ ] Clarify Project Requirements
@@ -59,7 +62,7 @@ PROGRESS TRACKING:
 - If any tools are available to manage the above todo list, use it to track progress through this checklist.
 - After completing each step, mark it complete and add a summary.
 - Read current todo list status before starting each new step.
-
+f 
 COMMUNICATION RULES:
 - Avoid verbose explanations or printing full command outputs.
 - If a step is skipped, state that briefly (e.g. "No extensions needed").
