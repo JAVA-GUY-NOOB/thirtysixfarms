@@ -11,6 +11,11 @@ const Cart = () => {
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
+    const userId = localStorage.getItem('farmcity_userId');
+    if (!userId) {
+      window.location.href = '/login';
+      return;
+    }
     fetchCartItems();
   }, []);
 

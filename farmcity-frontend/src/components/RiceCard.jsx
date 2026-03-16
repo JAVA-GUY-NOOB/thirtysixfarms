@@ -13,6 +13,13 @@ const RiceCard = ({
 }) => {
   
   const handleAddToCart = async () => {
+    const userId = localStorage.getItem('farmcity_userId');
+    if (!userId) {
+      alert('Please login to add items to cart.');
+      window.location.href = '/login';
+      return;
+    }
+
     try {
       if (id) {
         await cartAPI.addItem(id, 1);

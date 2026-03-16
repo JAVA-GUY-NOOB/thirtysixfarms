@@ -10,6 +10,7 @@
     "console": "integratedTerminal",
     "vmArgs": "-Dspring.profiles.active=dev",
     "configurations": [
+
         {
             "type": "java",
             "name": "FarmcityApplication",

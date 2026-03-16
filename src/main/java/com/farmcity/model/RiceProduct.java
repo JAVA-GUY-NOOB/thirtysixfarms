@@ -2,9 +2,9 @@
 package com.farmcity.model;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 
 @Entity
 public class RiceProduct {
@@ -13,6 +13,7 @@ public class RiceProduct {
     private Long id;
 
     private String name = "Rice";
+    private String category = "General";
     private String description;
     private Double price;
     private String imageUrl;
@@ -20,6 +21,8 @@ public class RiceProduct {
 
     // Getters and setters
     public Long getId() { return id; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     public String getDescription() { return description; }

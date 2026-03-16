@@ -90,17 +90,35 @@ const CartPage = () => {
   };
 
   const proceedToCheckout = async () => {
+    const userId = localStorage.getItem('farmcity_userId');
+    const customerName = localStorage.getItem('farmcity_name') || 'Farmcity Shopper';
+    const email = localStorage.getItem('farmcity_email') || 'customer@example.com';
+
+    if (!userId) {
+      alert('Please login first to place an order.');
+      window.location.href = '/login';
+      return;
+    }
+
     try {
+      const orderItems = cartItems.map(item => ({
+        productId: item.productId || item.riceProduct?.id || item.id,
+        quantity: item.quantity,
+        price: item.price
+      }));
+
       const orderData = {
-        items: cartItems,
-        total: total,
-        email: 'customer@example.com' // In real app, get from user login
+        customerId: userId,
+        customerName,
+        email,
+        phone: '254700000000',
+        shippingAddress: 'Nairobi, Kenya',
+        totalAmount: total,
+        orderItems
       };
-      
+
       const paymentResult = await paymentAPI.processOrder(orderData);
-      alert(`Order placed successfully! Order ID: ${paymentResult.orderId}`);
-      
-      // Clear cart after successful order
+      alert(`Order placed successfully! Order ID: ${paymentResult.id || paymentResult.orderId || 'N/A'}`);
       await clearCart();
     } catch (error) {
       console.error('Failed to process order:', error);

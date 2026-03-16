@@ -114,7 +114,7 @@ public class MpesaService {
             .orElseGet(() -> {
                 CustomerOrder o = new CustomerOrder();
                 o.setReferenceCode(accountReference);
-                o.setAmount(amount); // decide unit consistency
+                o.setTotalAmount((double) amount);
                 o.setStatus("PENDING");
                 return orderRepo.save(o);
             });

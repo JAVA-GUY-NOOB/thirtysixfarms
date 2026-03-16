@@ -47,8 +47,25 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     public Review updateReview(Long id, Review review) {
-        // update logic
-        return null;
+        if (id == null || review == null) {
+            return null;
+        }
+        return reviewRepository.findById(id)
+                .map(existing -> {
+                    if (review.getProductId() != null) {
+                        existing.setProductId(review.getProductId());
+                    }
+                    if (review.getUserId() != null) {
+                        existing.setUserId(review.getUserId());
+                    }
+                    if (review.getComment() != null) {
+                        existing.setComment(review.getComment());
+                    }
+                    if (review.getRating() > 0) {
+                        existing.setRating(review.getRating());
+                    }
+                    return reviewRepository.save(existing);
+                }).orElse(null);
     }
 
     @Override
@@ -60,7 +77,11 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     public Double getAverageRatingByProductId(Long productId) {
-        // average rating logic
-        return null;
+        List<Review> list = reviewRepository.findByProductId(productId);
+        if (list.isEmpty()) {
+            return 0.0;
+        }
+        double sum = list.stream().mapToDouble(Review::getRating).sum();
+        return sum / list.size();
     }
 }

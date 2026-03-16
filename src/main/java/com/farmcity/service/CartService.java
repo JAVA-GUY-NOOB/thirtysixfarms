@@ -1,38 +1,40 @@
 package com.farmcity.service;
 
-import com.farmcity.entity.CartItem;
-import org.springframework.stereotype.Service;
-import java.util.ArrayList;
 import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.farmcity.entity.CartItem;
+import com.farmcity.repository.CartItemRepository;
 
 @Service
 public class CartService {
-    private final List<CartItem> cartItems = new ArrayList<>();
+    private final CartItemRepository cartItemRepository;
 
-    public List<CartItem> getCartItems() {
-        return new ArrayList<>(cartItems);
+    public CartService(CartItemRepository cartItemRepository) {
+        this.cartItemRepository = cartItemRepository;
+    }
+
+    public List<CartItem> getCartItems(Long userId) {
+        return cartItemRepository.findByUserId(userId);
     }
 
     public CartItem addToCart(CartItem cartItem) {
-        cartItems.add(cartItem);
-        return cartItem;
+        return cartItemRepository.save(cartItem);
     }
 
     public CartItem updateQuantity(Long id, int quantity) {
-        for (CartItem item : cartItems) {
-            if (item.getId().equals(id)) {
-                item.setQuantity(quantity);
-                return item;
-            }
-        }
-        return null;
+        return cartItemRepository.findById(id).map(item -> {
+            item.setQuantity(quantity);
+            return cartItemRepository.save(item);
+        }).orElse(null);
     }
 
     public void removeFromCart(Long id) {
-        cartItems.removeIf(item -> item.getId().equals(id));
+        cartItemRepository.deleteById(id);
     }
 
-    public void clearCart() {
-        cartItems.clear();
+    public void clearCart(Long userId) {
+        cartItemRepository.findByUserId(userId).forEach(item -> cartItemRepository.delete(item));
     }
 }
