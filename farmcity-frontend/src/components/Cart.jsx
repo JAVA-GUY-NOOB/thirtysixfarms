@@ -11,28 +11,29 @@ const Cart = () => {
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
-    const userId = localStorage.getItem('farmcity_userId');
-    if (!userId) {
-      window.location.href = '/login';
-      return;
-    }
     fetchCartItems();
   }, []);
 
   useEffect(() => {
-    const newTotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const newTotal = cartItems.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
     setTotal(newTotal);
   }, [cartItems]);
 
   const fetchCartItems = async () => {
     try {
-  const response = await cartAPI.getItems();
-      setCartItems(response || []);
+      const response = await cartAPI.getItems();
+      const normalized = (response || []).map(item => ({
+        id: item.id,
+        name: item.name || item.productName || 'Rice',
+        image: item.imageUrl || item.image || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80',
+        price: item.unitPrice || item.price || 0,
+        quantity: item.quantity || 1,
+      }));
+      setCartItems(normalized);
     } catch (error) {
       console.error('Error fetching cart:', error);
-      // Mock data for testing
       setCartItems([
-        { id: 1, name: 'Premium Basmati Rice', price: 1200, quantity: 2,  image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80' },
+        { id: 1, name: 'Premium Basmati Rice', price: 1200, quantity: 2, image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80' },
         { id: 2, name: 'Organic Brown Rice', price: 800, quantity: 1, image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80' }
       ]);
     } finally {

@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,6 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin(origins = "http://localhost:3000")
 public class ContactController {
     private final List<Map<String, Object>> messages = new ArrayList<>();
+
+    @GetMapping
+    public ResponseEntity<List<Map<String, Object>>> listMessages() {
+        return ResponseEntity.ok(messages);
+    }
 
     @PostMapping
     public ResponseEntity<Map<String, Object>> submit(@RequestBody Map<String, Object> body) {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { cartAPI, paymentAPI } from '../api/farmcityApi';
+import { cartAPI, orderAPI } from '../api/farmcityApi';
 
 const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
@@ -15,8 +15,16 @@ const CartPage = () => {
     try {
       setLoading(true);
       const items = await cartAPI.getItems();
-      setCartItems(items);
-      calculateTotal(items);
+      const normalized = items.map(item => ({
+        id: item.id,
+        productId: item.productId || item.product_id,
+        productName: item.name || item.productName || 'Rice',
+        image: item.imageUrl || item.image || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80',
+        price: item.unitPrice || item.price || 0,
+        quantity: item.quantity || 1,
+      }));
+      setCartItems(normalized);
+      calculateTotal(normalized);
     } catch (error) {
       console.error('Failed to fetch cart items:', error);
       // Fallback to mock data if API fails
@@ -46,7 +54,7 @@ const CartPage = () => {
   };
 
   const calculateTotal = (items) => {
-    const totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const totalAmount = items.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
     setTotal(totalAmount);
   };
 
@@ -90,39 +98,13 @@ const CartPage = () => {
   };
 
   const proceedToCheckout = async () => {
-    const userId = localStorage.getItem('farmcity_userId');
-    const customerName = localStorage.getItem('farmcity_name') || 'Farmcity Shopper';
-    const email = localStorage.getItem('farmcity_email') || 'customer@example.com';
-
-    if (!userId) {
-      alert('Please login first to place an order.');
-      window.location.href = '/login';
-      return;
-    }
-
     try {
-      const orderItems = cartItems.map(item => ({
-        productId: item.productId || item.riceProduct?.id || item.id,
-        quantity: item.quantity,
-        price: item.price
-      }));
-
-      const orderData = {
-        customerId: userId,
-        customerName,
-        email,
-        phone: '254700000000',
-        shippingAddress: 'Nairobi, Kenya',
-        totalAmount: total,
-        orderItems
-      };
-
-      const paymentResult = await paymentAPI.processOrder(orderData);
-      alert(`Order placed successfully! Order ID: ${paymentResult.id || paymentResult.orderId || 'N/A'}`);
+      const result = await orderAPI.create();
+      alert(`Order placed successfully! Order ID: ${result.orderId} | Ref: ${result.reference}`);
       await clearCart();
     } catch (error) {
       console.error('Failed to process order:', error);
-      alert('Failed to process order. Please try again.');
+      alert('Failed to place order. Please try again.');
     }
   };
 

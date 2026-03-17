@@ -80,6 +80,9 @@ public class AuthController {
             return ResponseEntity.status(401).body(Map.of("error", "invalid session"));
         }
         Long userId = sessions.get(token);
+        if (userId == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "invalid session"));
+        }
         Optional<UserAccount> user = userAccountRepository.findById(userId);
         if (user.isEmpty()) {
             return ResponseEntity.status(401).body(Map.of("error", "invalid session"));

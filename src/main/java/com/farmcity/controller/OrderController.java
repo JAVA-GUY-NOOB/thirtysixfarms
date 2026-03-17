@@ -53,7 +53,14 @@ public class OrderController {
     public ResponseEntity<Map<String, Object>> createFromCart(@RequestBody(required = false) Map<String, Object> body, @org.springframework.web.bind.annotation.RequestParam(required = false) Long userId) {
         Long uid = userId == null ? 1L : userId;
         List<CartItem> items = cartService.getCartItems(uid);
-        double total = items.stream().mapToDouble(ci -> (ci.getUnitPrice() == null ? 0.0 : ci.getUnitPrice()) * (ci.getQuantity() == null ? 1 : ci.getQuantity())).sum();
+        double total = 0.0;
+        for (CartItem ci : items) {
+            Double unitPrice = ci.getUnitPrice();
+            Integer quantity = ci.getQuantity();
+            if (unitPrice != null && quantity != null) {
+                total += unitPrice * quantity;
+            }
+        }
         if (total <= 0) {
             return ResponseEntity.badRequest().body(Map.of("error", "Cart empty or invalid prices"));
         }
@@ -87,7 +94,7 @@ public class OrderController {
     }
 
     @PutMapping("/{id}/status")
-    public ResponseEntity<CustomerOrder> updateStatus(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<CustomerOrder> updateStatus(@PathVariable long id, @RequestBody Map<String, Object> body) {
         String status = body.getOrDefault("status", "PENDING").toString();
         return orderRepository.findById(id)
                 .map(order -> {

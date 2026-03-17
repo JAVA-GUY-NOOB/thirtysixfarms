@@ -1,6 +1,7 @@
 package com.farmcity.service;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 
@@ -42,7 +43,7 @@ public class ReviewServiceImpl implements ReviewService {
         if (review == null) {
             return null;
         }
-        return reviewRepository.save(review);
+        return reviewRepository.save(Objects.requireNonNull(review));
     }
 
     @Override
@@ -64,7 +65,7 @@ public class ReviewServiceImpl implements ReviewService {
                     if (review.getRating() > 0) {
                         existing.setRating(review.getRating());
                     }
-                    return reviewRepository.save(existing);
+                    return reviewRepository.save(Objects.requireNonNull(existing));
                 }).orElse(null);
     }
 

@@ -7,7 +7,6 @@ import ProductList from './pages/ProductList';
 import RiceList from './pages/RiceList';
 import AboutUs from './pages/AboutUs';
 import CartPage from './pages/CartPage';
-import Login from './pages/Login';
 import { CartProvider } from './context/CartContext';
 import Navbar from './components/Navbar';
 import Cart from './components/Cart';
@@ -82,7 +81,6 @@ function App() {
             <Route path="/about-us" element={<AboutUs />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<Checkout />} />
-            <Route path="/login" element={<Login />} />
           </Routes>
           <PaymentModal />
         </div>

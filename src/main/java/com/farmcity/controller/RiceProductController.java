@@ -4,6 +4,7 @@ package com.farmcity.controller;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -49,6 +50,7 @@ public class RiceProductController {
 
     @GetMapping("/{id}")
     public ResponseEntity<RiceProduct> getById(@PathVariable Long id) {
+        if (id == null) return ResponseEntity.badRequest().build();
         return riceProductRepository.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -59,11 +61,12 @@ public class RiceProductController {
         if (product == null || product.getName() == null || product.getPrice() == null) {
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok(riceProductRepository.save(product));
+        return ResponseEntity.ok(riceProductRepository.save(Objects.requireNonNull(product)));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<RiceProduct> update(@PathVariable Long id, @RequestBody RiceProduct update) {
+        if (id == null || update == null) return ResponseEntity.badRequest().build();
         return riceProductRepository.findById(id)
                 .map(existing -> {
                     existing.setName(update.getName() != null ? update.getName() : existing.getName());
@@ -78,9 +81,10 @@ public class RiceProductController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, Object>> delete(@PathVariable Long id) {
+        if (id == null) return ResponseEntity.badRequest().build();
         return riceProductRepository.findById(id)
                 .map(existing -> {
-                    riceProductRepository.delete(existing);
+                    riceProductRepository.delete(Objects.requireNonNull(existing));
                     Map<String, Object> resp = new HashMap<>();
                     resp.put("deleted", true);
                     return ResponseEntity.ok(resp);

@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -128,7 +129,7 @@ public class MpesaService {
         tx.setOrder(order);
         if (result.get("MerchantRequestID") != null) tx.setMerchantRequestId(String.valueOf(result.get("MerchantRequestID")));
         if (result.get(CHECKOUT_REQUEST_ID) != null) tx.setCheckoutRequestId(String.valueOf(result.get(CHECKOUT_REQUEST_ID)));
-        repo.save(tx);
+        repo.save(Objects.requireNonNull(tx));
         return result;
     }
 
@@ -140,7 +141,8 @@ public class MpesaService {
             return;
         }
 
-        String checkoutRequestId = String.valueOf(stk.get(CHECKOUT_REQUEST_ID));
+        Object rawId = stk.get(CHECKOUT_REQUEST_ID);
+        String checkoutRequestId = rawId == null ? null : rawId.toString();
         log.info("[Mpesa] Processing callback for checkoutRequestId={}", checkoutRequestId);
 
         if (checkoutRequestId == null || checkoutRequestId.isBlank()) {
@@ -152,16 +154,16 @@ public class MpesaService {
             updateTransactionFromCallback(tx, stk, checkoutRequestId);
             updateOrderFromCallback(tx, stk);
             extractAndSetReceiptNumber(tx, stk);
-            repo.save(tx);
+            repo.save(Objects.requireNonNull(tx));
         }, () -> log.warn("[Mpesa] No transaction found for checkoutRequestId={}", checkoutRequestId));
     }
 
     private Map<?,?> extractStkCallback(Map<String, Object> callback) {
         Object bodyObj = callback.get("Body");
-        if (!(bodyObj instanceof Map)) return new HashMap<>();
+        if (!(bodyObj instanceof Map)) return null;
         Map<?,?> body = (Map<?,?>) bodyObj;
         Object stkObj = body.get("stkCallback");
-        if (!(stkObj instanceof Map)) return new HashMap<>();
+        if (!(stkObj instanceof Map)) return null;
         return (Map<?,?>) stkObj;
     }
 

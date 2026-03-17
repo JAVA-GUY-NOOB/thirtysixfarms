@@ -46,10 +46,12 @@ public class PaymentController {
     public ResponseEntity<Map<String, Object>> processOrder(@RequestBody Map<String, Object> body) {
         Object totalObj = body.getOrDefault("total", body.getOrDefault("amount", 0));
         double total = 0.0;
-        if (totalObj instanceof Number) {
-            total = ((Number) totalObj).doubleValue();
-        } else if (totalObj instanceof String) {
-            try { total = Double.parseDouble((String) totalObj); } catch (NumberFormatException ignored) {}
+        if (totalObj != null) {
+            try {
+                total = Double.parseDouble(totalObj.toString());
+            } catch (NumberFormatException ignored) {
+                total = 0.0;
+            }
         }
         String currency = (String) body.getOrDefault("currency", "KES");
         CustomerOrder order = new CustomerOrder();
