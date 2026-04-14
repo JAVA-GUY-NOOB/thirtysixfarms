@@ -8,4 +8,7 @@ import com.farmcity.entity.UserAccount;
 
 public interface UserAccountRepository extends JpaRepository<UserAccount, Long> {
     Optional<UserAccount> findByUsername(String username);
+    Optional<UserAccount> findByEmail(String email);
+    long countByRole(String role);
+    long countByIsActive(Boolean isActive);
 }

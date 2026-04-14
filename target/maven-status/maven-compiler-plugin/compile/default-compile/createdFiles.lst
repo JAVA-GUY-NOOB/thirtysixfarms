@@ -4,13 +4,18 @@ com\farmcity\service\ReviewRepository.class
 com\farmcity\config\CorsConfig.class
 com\farmcity\controller\PaymentController.class
 com\farmcity\controller\ReviewController.class
+com\farmcity\controller\OrderController.class
 com\farmcity\FarmcityApplication.class
 com\farmcity\repository\CustomerOrderRepository.class
 com\farmcity\controller\Review.class
 com\farmcity\entity\MpesaTransaction.class
+com\farmcity\repository\CartItemRepository.class
 com\farmcity\repository\MpesaTransactionRepository.class
+com\farmcity\service\CustomUserDetailsService.class
 com\farmcity\controller\MpesaController.class
+com\farmcity\repository\OrderItemRepository.class
 com\farmcity\service\ReviewService.class
+com\farmcity\repository\UserAccountRepository.class
 com\farmcity\config\CorsGlobalConfig.class
 com\farmcity\controller\AuthController.class
 com\farmcity\service\MpesaService$1.class
@@ -24,6 +29,8 @@ com\farmcity\config\JwtUtil.class
 com\farmcity\util\EmailUtil.class
 com\farmcity\controller\ContactController.class
 com\farmcity\controller\AdminController.class
+com\farmcity\controller\CartController.class
+com\farmcity\entity\UserAccount.class
 com\farmcity\controller\FAQController.class
 com\farmcity\service\CartService.class
 com\farmcity\controller\NewsletterController.class
@@ -31,6 +38,8 @@ com\farmcity\service\MpesaService$2.class
 com\farmcity\controller\RootController.class
 com\farmcity\service\RiceProductService.class
 com\farmcity\config\SecurityConfig.class
+com\farmcity\entity\OrderItem.class
 com\farmcity\service\ReviewServiceImpl.class
+com\farmcity\config\JwtAuthenticationFilter.class
 com\farmcity\config\MpesaConfig.class
 com\farmcity\service\MpesaService.class

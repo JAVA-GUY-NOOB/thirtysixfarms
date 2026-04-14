@@ -1,13 +1,12 @@
 const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
 
-function getUserId() {
-  const stored = localStorage.getItem('userId');
-  if (stored) {
-    const parsed = parseInt(stored, 10);
-    if (!isNaN(parsed) && parsed > 0) return parsed;
-  }
-  localStorage.setItem('userId', '1');
-  return 1;
+// Helper to get auth token
+function getAuthHeaders() {
+  const token = localStorage.getItem('token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+  };
 }
 
 // Generic API helper
@@ -15,7 +14,7 @@ async function apiRequest(endpoint, options = {}) {
   const url = `${API_BASE}${endpoint}`;
   const config = {
     headers: {
-      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
       ...options.headers,
     },
     ...options,
@@ -24,6 +23,11 @@ async function apiRequest(endpoint, options = {}) {
   try {
     const response = await fetch(url, config);
     if (!response.ok) {
+      if (response.status === 401) {
+        // Token expired or invalid
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
       throw new Error(`API Error: ${response.status} - ${response.statusText}`);
     }
     return await response.json();
@@ -48,12 +52,13 @@ export const riceAPI = {
   delete: (id) => apiRequest(`/api/rice-products/${id}`, {
     method: 'DELETE',
   }),
+  seed: () => apiRequest('/api/rice-products/seed', { method: 'POST' }),
 };
 
 // Cart API
 export const cartAPI = {
-  getItems: () => apiRequest(`/api/cart?userId=${getUserId()}`),
-  addItem: (productId, quantity = 1) => apiRequest(`/api/cart/add?userId=${getUserId()}`, {
+  getItems: () => apiRequest('/api/cart'),
+  addItem: (productId, quantity = 1) => apiRequest('/api/cart/add', {
     method: 'POST',
     body: JSON.stringify({ productId, quantity }),
   }),
@@ -64,17 +69,16 @@ export const cartAPI = {
   removeItem: (itemId) => apiRequest(`/api/cart/${itemId}`, {
     method: 'DELETE',
   }),
-  clear: () => apiRequest(`/api/cart/clear?userId=${getUserId()}`, {
-    method: 'DELETE',
-  }),
+  clear: () => apiRequest('/api/cart/clear', { method: 'DELETE' }),
 };
 
 // Orders API
 export const orderAPI = {
-  getAll: () => apiRequest(`/api/orders?userId=${getUserId()}`),
+  getAll: () => apiRequest('/api/orders'),
   getById: (id) => apiRequest(`/api/orders/${id}`),
-  create: () => apiRequest(`/api/orders?userId=${getUserId()}`, {
+  create: (orderData) => apiRequest('/api/orders', {
     method: 'POST',
+    body: JSON.stringify(orderData),
   }),
   updateStatus: (id, status) => apiRequest(`/api/orders/${id}/status`, {
     method: 'PUT',
@@ -96,6 +100,15 @@ export const paymentAPI = {
     method: 'POST',
     body: JSON.stringify(orderData),
   }),
+};
+
+// MPESA API
+export const mpesaAPI = {
+  initiateStkPush: (phone, amount, reference = 'ORDER') => apiRequest('/api/mpesa/stkpush', {
+    method: 'POST',
+    body: JSON.stringify({ phone, amount, reference }),
+  }),
+  checkStatus: (checkoutRequestId) => apiRequest(`/api/mpesa/status/${checkoutRequestId}`),
 };
 
 // Reviews API
@@ -132,7 +145,7 @@ export const newsletterAPI = {
   }),
 };
 
-// Contact API 
+// Contact API
 export const contactAPI = {
   submit: (contactData) => apiRequest('/api/contact', {
     method: 'POST',
@@ -149,16 +162,17 @@ export const testimonialAPI = {
   }),
 };
 
-// MPESA API
-export const mpesaAPI = {
-  initiateStkPush: (phone, amount) => apiRequest('/api/mpesa/stk-push', {
-    method: 'POST',
-    body: JSON.stringify({ phone, amount }),
+// Admin API
+export const adminAPI = {
+  getDashboardStats: () => apiRequest('/api/admin/dashboard-stats'),
+  getOrders: (filters = {}) => apiRequest(`/api/admin/orders?${new URLSearchParams(filters)}`),
+  getUsers: () => apiRequest('/api/admin/users'),
+  updateOrderStatus: (id, status) => apiRequest(`/api/admin/orders/${id}/status`, {
+    method: 'PUT',
+    body: JSON.stringify({ status }),
   }),
-  callback: (callbackData) => apiRequest('/api/mpesa/callback', {
-    method: 'POST',
-    body: JSON.stringify(callbackData),
-  }),
+  getRevenueData: (period = 'month') => apiRequest(`/api/admin/revenue?period=${period}`),
+  getOrdersByCounty: () => apiRequest('/api/admin/orders-by-county'),
 };
 
 export default {
@@ -166,10 +180,11 @@ export default {
   cartAPI,
   orderAPI,
   paymentAPI,
+  mpesaAPI,
   reviewAPI,
   faqAPI,
   newsletterAPI,
   contactAPI,
   testimonialAPI,
-  mpesaAPI,
+  adminAPI,
 };

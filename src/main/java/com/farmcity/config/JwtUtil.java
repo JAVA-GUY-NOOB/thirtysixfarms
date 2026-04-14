@@ -21,7 +21,7 @@ public class JwtUtil {
     private static final String SECRET_KEY_STRING = System.getenv("JWT_SECRET_KEY");
     private static final SecretKey SECRET_KEY = Keys.hmacShaKeyFor(SECRET_KEY_STRING.getBytes());
 
-    public String generateToken(String username) {
+    public static String generateToken(String username) {
         return Jwts.builder()
                 .subject(username)
                 .issuedAt(new Date())
@@ -30,7 +30,7 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String extractUsername(String token) {
+    public static String extractUsername(String token) {
         return Jwts.parser()
                 .verifyWith(SECRET_KEY)
                 .build()
@@ -39,12 +39,12 @@ public class JwtUtil {
                 .getSubject();
     }
 
-    public boolean validateToken(String token, String username) {
+    public static boolean validateToken(String token, String username) {
         String extractedUsername = extractUsername(token);
         return extractedUsername.equals(username) && !isTokenExpired(token);
     }
 
-    private boolean isTokenExpired(String token) {
+    private static boolean isTokenExpired(String token) {
         Date expiration = Jwts.parser()
                 .verifyWith(SECRET_KEY)
                 .build()

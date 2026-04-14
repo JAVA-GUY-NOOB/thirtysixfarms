@@ -1,30 +1,23 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import {
+  Box,
+  Container,
+  Typography,
+  Button,
+  Grid,
+  Card,
+  CardContent,
+  Chip,
+  Paper,
+} from '@mui/material';
+import { ShoppingCart, LocalShipping, Verified, Agriculture } from '@mui/icons-material';
 import RiceCard from '../components/RiceCard';
-import ImageCarousel from '../components/ImageCarousel';
 import TestimonialSection from '../components/TestimonialSection';
 import NewsletterSignup from '../components/NewsletterSignup';
 import FAQSection from '../components/FAQSection';
 import { riceAPI } from '../api/farmcityApi';
-
-const recipes = [
-  {
-    title: 'Gen Z Basmati Pilaf',
-    steps: [
-      'Rinse 1 cup basmati rice until water runs clear.',
-      'Add rice to pot with 2 cups water, pinch of salt, and 1 tsp olive oil.',
-      'Bring to boil, cover, simmer 12 min. Fluff and top with avocado + sriracha.'
-    ]
-  },
-  {
-    title: 'Brown Rice Power Bowl',
-    steps: [
-      'Cook 1 cup brown rice as per pack instructions.',
-      'Layer with roasted veggies, chickpeas, and drizzle tahini.',
-      'Finish with lemon zest and microgreens.'
-    ]
-  }
-];
 
 const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -37,158 +30,295 @@ const Home = () => {
   const fetchFeaturedProducts = async () => {
     try {
       const products = await riceAPI.getAll();
-      setFeaturedProducts(products.slice(0, 3));
+      setFeaturedProducts(products.slice(0, 4));
     } catch (error) {
-      setFeaturedProducts([
-        {
-          id: 1,
-          name: 'Golden Basmati',
-          price: 520,
-          description: 'Premium aromatic basmati rice (1kg)',
-          image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80'
-        },
-        {
-          id: 2,
-          name: 'Green Jasmine',
-          price: 440,
-          description: 'Fragrant Thai jasmine rice (1kg)',
-          image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80'
-        },
-        {
-          id: 3,
-          name: 'Classic Long Grain',
-          price: 380,
-          description: 'Traditional long grain rice (1kg)',
-          image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80'
-        }
-      ]);
+      console.error('Error fetching products:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  const features = [
+    {
+      icon: <LocalShipping sx={{ fontSize: 48, color: '#4caf50' }} />,
+      title: 'Free Delivery',
+      description: 'Free delivery on all orders over KSh 5,000. Fast and reliable to your doorstep.',
+    },
+    {
+      icon: <Verified sx={{ fontSize: 48, color: '#e3c770' }} />,
+      title: 'KEBS Certified',
+      description: 'All our rice products are certified by Kenya Bureau of Standards for quality.',
+    },
+    {
+      icon: <Agriculture sx={{ fontSize: 48, color: '#4caf50' }} />,
+      title: 'Direct from Farmers',
+      description: 'Supporting local farmers by sourcing directly, ensuring freshness and fair prices.',
+    },
+  ];
+
   return (
-    <div style={{ padding: '2rem 0', background: 'linear-gradient(120deg, #f7f7f7 0%, #e3c770 100%)' }}>
-      <ImageCarousel />
-      <motion.div
-        initial={{ opacity: 0, y: -30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        style={{ textAlign: 'center', marginBottom: '3rem' }}
-      >
-        <h1 style={{
-          fontSize: '3.5rem',
-          fontWeight: 'bold',
-          background: 'linear-gradient(120deg, #e3c770 0%, #4caf50 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          marginBottom: '1rem'
-        }}>
-          🌾 Welcome to Farmcity
-        </h1>
-        <p style={{
-          fontSize: '1.3rem',
-          color: '#666',
-          maxWidth: '700px',
-          margin: '0 auto 2rem',
-          lineHeight: '1.6'
-        }}>
-          Discover premium rice varieties, fresh from the farm. Organic, sustainable, and delivered with love. <span style={{ color: '#4caf50', fontWeight: 'bold' }}>Gen Z vibes only!</span>
-        </p>
-        <motion.a
-          href="/products"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          style={{
-            display: 'inline-block',
-            background: 'linear-gradient(120deg, #4caf50 0%, #e3c770 100%)',
-            color: '#fff',
-            fontWeight: 'bold',
-            padding: '1rem 2.5rem',
-            borderRadius: '12px',
-            fontSize: '1.2rem',
-            boxShadow: '0 2px 12px rgba(76,175,80,0.15)',
-            textDecoration: 'none',
-            marginTop: '1rem',
-            marginBottom: '2rem',
-            transition: 'all 0.3s'
-          }}
-        >
-          Shop Rice ➡️
-        </motion.a>
-      </motion.div>
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap', marginBottom: '3rem' }}>
-        {loading ? <div>Loading...</div> : featuredProducts.map(product => (
-          <RiceCard key={product.id} {...product} />
-        ))}
-      </div>
-      <section style={{ background: '#fff', borderRadius: '16px', boxShadow: '0 2px 12px rgba(76,175,80,0.10)', padding: '2rem', margin: '2rem auto', maxWidth: '700px' }}>
-        <h2 style={{ fontWeight: 'bold', fontSize: '2rem', marginBottom: '1rem', color: '#4caf50' }}>🍚 Easy Rice Recipes</h2>
-        {recipes.map((recipe, idx) => (
-          <div key={idx} style={{ marginBottom: '2rem' }}>
-            <h3 style={{ fontSize: '1.3rem', color: '#e3c770', marginBottom: '0.5rem' }}>{recipe.title}</h3>
-            <ul style={{ textAlign: 'left', color: '#444', fontSize: '1rem', marginLeft: '1.5rem' }}>
-              {recipe.steps.map((step, i) => (
-                <li key={i} style={{ marginBottom: '0.5rem' }}>{step}</li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </section>
-      <TestimonialSection />
-      <NewsletterSignup />
-      <FAQSection />
-      {/* Features Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.8 }}
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: '2rem',
-          marginTop: '4rem',
-          maxWidth: '900px',
-          margin: '4rem auto 0'
+    <Box sx={{ overflow: 'hidden' }}>
+      {/* Hero Section */}
+      <Box
+        sx={{
+          background: 'linear-gradient(135deg, #4caf50 0%, #81c784 50%, #e3c770 100%)',
+          minHeight: '80vh',
+          display: 'flex',
+          alignItems: 'center',
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        <div style={{
-          textAlign: 'center',
-          padding: '2rem',
-          background: 'rgba(76, 175, 80, 0.1)',
-          borderRadius: '16px',
-          border: '2px solid rgba(76, 175, 80, 0.2)'
-        }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🚚</div>
-          <h3 style={{ color: '#4caf50', marginBottom: '1rem' }}>Free Delivery</h3>
-          <p style={{ color: '#666' }}>Free delivery on all orders over KSh 5,000. Fast and reliable to your doorstep.</p>
-        </div>
-        
-        <div style={{
-          textAlign: 'center',
-          padding: '2rem',
-          background: 'rgba(227, 199, 112, 0.1)',
-          borderRadius: '16px',
-          border: '2px solid rgba(227, 199, 112, 0.2)'
-        }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌱</div>
-          <h3 style={{ color: '#e3c770', marginBottom: '1rem' }}>Organic Quality</h3>
-          <p style={{ color: '#666' }}>100% organic rice varieties grown without harmful pesticides or chemicals.</p>
-        </div>
-        
-        <div style={{
-          textAlign: 'center',
-          padding: '2rem',
-          background: 'rgba(76, 175, 80, 0.1)',
-          borderRadius: '16px',
-          border: '2px solid rgba(76, 175, 80, 0.2)'
-        }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>👨‍🌾</div>
-          <h3 style={{ color: '#4caf50', marginBottom: '1rem' }}>Direct from Farmers</h3>
-          <p style={{ color: '#666' }}>Supporting local farmers by sourcing directly, ensuring freshness and fair prices.</p>
-        </div>
-      </motion.div>
-    </div>
+        <Container maxWidth="xl">
+          <Grid container spacing={4} alignItems="center">
+            <Grid item xs={12} md={6}>
+              <motion.div
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8 }}
+              >
+                <Chip
+                  label="✨ Now with M-Pesa & Card Payments"
+                  sx={{
+                    mb: 3,
+                    background: 'rgba(255,255,255,0.9)',
+                    color: '#4caf50',
+                    fontWeight: 'bold',
+                  }}
+                />
+
+                <Typography
+                  variant="h1"
+                  sx={{
+                    fontWeight: 'bold',
+                    color: '#fff',
+                    mb: 2,
+                    fontSize: { xs: '2.5rem', md: '4rem' },
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.2)',
+                  }}
+                >
+                  Premium Quality Rice
+                </Typography>
+
+                <Typography
+                  variant="h5"
+                  sx={{
+                    color: 'rgba(255,255,255,0.9)',
+                    mb: 4,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  Discover premium rice varieties, fresh from Kenyan farms.
+                  Organic, sustainable, and delivered with love.
+                </Typography>
+
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <Button
+                    component={Link}
+                    to="/products"
+                    variant="contained"
+                    size="large"
+                    startIcon={<ShoppingCart />}
+                    sx={{
+                      background: '#fff',
+                      color: '#4caf50',
+                      px: 4,
+                      py: 1.5,
+                      fontWeight: 'bold',
+                      fontSize: '1.1rem',
+                      '&:hover': {
+                        background: '#f5f5f5',
+                        transform: 'translateY(-2px)',
+                      },
+                    }}
+                  >
+                    Shop Now
+                  </Button>
+                  <Button
+                    component={Link}
+                    to="/about"
+                    variant="outlined"
+                    size="large"
+                    sx={{
+                      borderColor: '#fff',
+                      color: '#fff',
+                      px: 4,
+                      py: 1.5,
+                      fontWeight: 'bold',
+                      fontSize: '1.1rem',
+                      '&:hover': {
+                        borderColor: '#fff',
+                        background: 'rgba(255,255,255,0.1)',
+                      },
+                    }}
+                  >
+                    Learn More
+                  </Button>
+                </Box>
+
+                {/* Quality Badges */}
+                <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
+                  <Chip
+                    icon={<Verified />}
+                    label="KEBS Certified"
+                    sx={{ background: 'rgba(255,255,255,0.9)', color: '#333' }}
+                  />
+                  <Chip
+                    label="☪ HALAL"
+                    sx={{ background: 'rgba(255,255,255,0.9)', color: '#333' }}
+                  />
+                </Box>
+              </motion.div>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <Box
+                  component="img"
+                  src="https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=800&q=80"
+                  alt="Premium Rice"
+                  sx={{
+                    maxWidth: '100%',
+                    borderRadius: 4,
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+                  }}
+                />
+              </motion.div>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* Promotional Banner */}
+      <Box sx={{ background: '#ff6f00', py: 2 }}>
+        <Container>
+          <Typography
+            variant="h6"
+            textAlign="center"
+            sx={{ color: '#fff', fontWeight: 'bold' }}
+          >
+            🎉 SPECIAL OFFER: Get 10% OFF on your first order! Use code: WELCOME10
+          </Typography>
+        </Container>
+      </Box>
+
+      {/* Featured Products */}
+      <Container sx={{ py: 8 }}>
+        <Typography
+          variant="h3"
+          textAlign="center"
+          sx={{ fontWeight: 'bold', mb: 1, color: '#4caf50' }}
+        >
+          Featured Products
+        </Typography>
+        <Typography
+          variant="body1"
+          textAlign="center"
+          sx={{ color: 'text.secondary', mb: 4 }}
+        >
+          Discover our most popular rice varieties
+        </Typography>
+
+        <Grid container spacing={4}>
+          {loading
+            ? Array.from(new Array(4)).map((_, i) => (
+                <Grid item xs={12} sm={6} md={3} key={i}>
+                  <Card sx={{ height: 300, background: '#f5f5f5' }} />
+                </Grid>
+              ))
+            : featuredProducts.map((product) => (
+                <Grid item xs={12} sm={6} md={3} key={product.id}>
+                  <RiceCard {...product} />
+                </Grid>
+              ))}
+        </Grid>
+
+        <Box sx={{ textAlign: 'center', mt: 4 }}>
+          <Button
+            component={Link}
+            to="/products"
+            variant="contained"
+            size="large"
+            sx={{
+              background: 'linear-gradient(45deg, #4caf50 30%, #81c784 90%)',
+              px: 6,
+              fontWeight: 'bold',
+            }}
+          >
+            View All Products
+          </Button>
+        </Box>
+      </Container>
+
+      {/* Features Section */}
+      <Box sx={{ background: '#f5f5f5', py: 8 }}>
+        <Container>
+          <Typography
+            variant="h3"
+            textAlign="center"
+            sx={{ fontWeight: 'bold', mb: 6, color: '#4caf50' }}
+          >
+            Why Choose Farmcity?
+          </Typography>
+
+          <Grid container spacing={4}>
+            {features.map((feature, index) => (
+              <Grid item xs={12} md={4} key={index}>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  viewport={{ once: true }}
+                >
+                  <Card
+                    sx={{
+                      height: '100%',
+                      textAlign: 'center',
+                      p: 3,
+                      borderRadius: 3,
+                      boxShadow: 2,
+                      '&:hover': {
+                        transform: 'translateY(-8px)',
+                        boxShadow: 4,
+                      },
+                      transition: 'all 0.3s ease',
+                    }}
+                  >
+                    <CardContent>
+                      <Box sx={{ mb: 2 }}>{feature.icon}</Box>
+                      <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 2 }}>
+                        {feature.title}
+                      </Typography>
+                      <Typography variant="body1" color="text.secondary">
+                        {feature.description}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* Social Proof Section */}
+      <TestimonialSection />
+
+      {/* Newsletter */}
+      <NewsletterSignup />
+
+      {/* FAQ */}
+      <FAQSection />
+    </Box>
   );
 };
 

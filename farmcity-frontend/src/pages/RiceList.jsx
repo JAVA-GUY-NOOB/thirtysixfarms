@@ -11,7 +11,8 @@ const recipes = [
     steps: [
       'Rinse 1 cup basmati rice until water runs clear.',
       'Add rice to pot with 2 cups water, pinch of salt, and 1 tsp olive oil.',
-// Removed duplicate declaration of RiceList
+      'Bring to boil, reduce heat, cover and simmer for 15 mins.',
+      'Fluff with fork and serve with herbs.'
     ]
   },
   {
@@ -84,7 +85,7 @@ const RiceList = () => {
       </section>
       <div style={{ textAlign: 'center', marginTop: '2rem', color: '#666', fontSize: '1.1rem' }}>
         <span style={{ background: '#e3c770', color: '#fff', borderRadius: '8px', padding: '0.5rem 1rem', fontWeight: 'bold' }}>
-          Gen Z Approved 🌱
+          FARMER'S Approved 🌱
         </span>
       </div>
     </div>

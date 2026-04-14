@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/tmp/**)",
+      "Bash(tar -xzf maven.tar.gz)"
+    ]
+  }
+}
