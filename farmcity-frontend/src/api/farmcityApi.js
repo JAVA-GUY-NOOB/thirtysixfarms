@@ -76,6 +76,7 @@ export const cartAPI = {
 export const orderAPI = {
   getAll: () => apiRequest('/api/orders'),
   getById: (id) => apiRequest(`/api/orders/${id}`),
+  getMyOrders: () => apiRequest('/api/orders/my-orders'),
   create: (orderData) => apiRequest('/api/orders', {
     method: 'POST',
     body: JSON.stringify(orderData),
@@ -162,6 +163,43 @@ export const testimonialAPI = {
   }),
 };
 
+// Ads & Offers API
+export const adsOffersAPI = {
+  // Public endpoints
+  getActiveAds: (position) => apiRequest(`/api/ads/active${position ? `?position=${position}` : ''}`),
+  getActiveOffers: () => apiRequest('/api/offers/active'),
+  getHomepageOffers: () => apiRequest('/api/offers/homepage'),
+  validatePromoCode: (promoCode, orderAmount) => apiRequest('/api/offers/validate', {
+    method: 'POST',
+    body: JSON.stringify({ promoCode, orderAmount }),
+  }),
+  recordAdClick: (id) => apiRequest(`/api/ads/${id}/click`, { method: 'POST' }),
+  recordAdImpression: (id) => apiRequest(`/api/ads/${id}/impression`, { method: 'POST' }),
+
+  // Admin endpoints
+  getAllAds: () => apiRequest('/api/admin/ads'),
+  createAd: (ad) => apiRequest('/api/admin/ads', {
+    method: 'POST',
+    body: JSON.stringify(ad),
+  }),
+  updateAd: (id, ad) => apiRequest(`/api/admin/ads/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(ad),
+  }),
+  deleteAd: (id) => apiRequest(`/api/admin/ads/${id}`, { method: 'DELETE' }),
+  getAllOffers: () => apiRequest('/api/admin/offers'),
+  createOffer: (offer) => apiRequest('/api/admin/offers', {
+    method: 'POST',
+    body: JSON.stringify(offer),
+  }),
+  updateOffer: (id, offer) => apiRequest(`/api/admin/offers/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(offer),
+  }),
+  deleteOffer: (id) => apiRequest(`/api/admin/offers/${id}`, { method: 'DELETE' }),
+  getAdStats: () => apiRequest('/api/admin/ads/stats'),
+};
+
 // Admin API
 export const adminAPI = {
   getDashboardStats: () => apiRequest('/api/admin/dashboard-stats'),
@@ -173,6 +211,9 @@ export const adminAPI = {
   }),
   getRevenueData: (period = 'month') => apiRequest(`/api/admin/revenue?period=${period}`),
   getOrdersByCounty: () => apiRequest('/api/admin/orders-by-county'),
+
+  // Ads & Offers management
+  ...adsOffersAPI,
 };
 
 export default {
@@ -187,4 +228,5 @@ export default {
   contactAPI,
   testimonialAPI,
   adminAPI,
+  adsOffersAPI,
 };

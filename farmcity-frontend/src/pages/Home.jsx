@@ -17,6 +17,8 @@ import RiceCard from '../components/RiceCard';
 import TestimonialSection from '../components/TestimonialSection';
 import NewsletterSignup from '../components/NewsletterSignup';
 import FAQSection from '../components/FAQSection';
+import AdsBanner from '../components/AdsBanner';
+import PromotionalOffers from '../components/PromotionalOffers';
 import { riceAPI } from '../api/farmcityApi';
 
 const Home = () => {
@@ -58,6 +60,9 @@ const Home = () => {
 
   return (
     <Box sx={{ overflow: 'hidden' }}>
+      {/* Advertisement Banner */}
+      <AdsBanner position="HOME_BANNER" />
+
       {/* Hero Section */}
       <Box
         sx={{
@@ -310,6 +315,9 @@ const Home = () => {
         </Container>
       </Box>
 
+      {/* Promotional Offers */}
+      <PromotionalOffers />
+
       {/* Social Proof Section */}
       <TestimonialSection />
 
@@ -318,6 +326,9 @@ const Home = () => {
 
       {/* FAQ */}
       <FAQSection />
+
+      {/* Bottom Ad Banner */}
+      <AdsBanner position="HOME_SIDEBAR" />
     </Box>
   );
 };

@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Read(//c/tmp/**)",
-      "Bash(tar -xzf maven.tar.gz)"
+      "Bash(tar -xzf maven.tar.gz)",
+      "Bash(git add:*)"
     ]
   }
 }

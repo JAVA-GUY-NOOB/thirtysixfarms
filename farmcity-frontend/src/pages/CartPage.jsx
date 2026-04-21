@@ -1,11 +1,46 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { cartAPI, orderAPI } from '../api/farmcityApi';
+import { useNavigate } from 'react-router-dom';
+import {
+  Box,
+  Container,
+  Typography,
+  Card,
+  CardContent,
+  Button,
+  IconButton,
+  TextField,
+  Grid,
+  Divider,
+  Chip,
+  Alert,
+  Paper,
+  CircularProgress,
+} from '@mui/material';
+import {
+  Add,
+  Remove,
+  Delete,
+  ShoppingCart,
+  ArrowForward,
+  LocalOffer,
+  CheckCircle,
+} from '@mui/icons-material';
+import { cartAPI, orderAPI, adsOffersAPI } from '../api/farmcityApi';
+import AdsBanner from '../components/AdsBanner';
 
 const CartPage = () => {
+  const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [subtotal, setSubtotal] = useState(0);
+  const [discount, setDiscount] = useState(0);
   const [total, setTotal] = useState(0);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoError, setPromoError] = useState('');
+  const [promoSuccess, setPromoSuccess] = useState('');
+  const [appliedOffer, setAppliedOffer] = useState(null);
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     fetchCartItems();
@@ -18,59 +53,42 @@ const CartPage = () => {
       const normalized = items.map(item => ({
         id: item.id,
         productId: item.productId || item.product_id,
-        productName: item.name || item.productName || 'Rice',
+        productName: item.name || item.productName || 'Rice Product',
         image: item.imageUrl || item.image || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80',
         price: item.unitPrice || item.price || 0,
         quantity: item.quantity || 1,
       }));
       setCartItems(normalized);
-      calculateTotal(normalized);
+      calculateTotals(normalized, discount);
     } catch (error) {
       console.error('Failed to fetch cart items:', error);
-      // Fallback to mock data if API fails
-      const mockItems = [
-        {
-          id: 1,
-          productId: 1,
-          productName: "Premium Basmati Rice",
-          price: 15.99,
-          quantity: 2,
-          image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80"
-        },
-        {
-          id: 2,
-          productId: 2,
-          productName: "Organic Brown Rice",
-          price: 12.99,
-          quantity: 1,
-          image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=400&q=80"
-        }
-      ];
-      setCartItems(mockItems);
-      calculateTotal(mockItems);
+      // Fallback to empty cart
+      setCartItems([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const calculateTotal = (items) => {
-    const totalAmount = items.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
-    setTotal(totalAmount);
+  const calculateTotals = (items, discountAmount = 0) => {
+    const sub = items.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
+    setSubtotal(sub);
+    const disc = Math.min(discountAmount, sub);
+    setDiscount(disc);
+    setTotal(sub - disc);
   };
 
   const updateQuantity = async (itemId, newQuantity) => {
     if (newQuantity < 1) return;
-    
+
     try {
       await cartAPI.updateItem(itemId, newQuantity);
       const updatedItems = cartItems.map(item =>
         item.id === itemId ? { ...item, quantity: newQuantity } : item
       );
       setCartItems(updatedItems);
-      calculateTotal(updatedItems);
+      calculateTotals(updatedItems, discount);
     } catch (error) {
       console.error('Failed to update quantity:', error);
-      alert('Failed to update quantity');
     }
   };
 
@@ -79,10 +97,9 @@ const CartPage = () => {
       await cartAPI.removeItem(itemId);
       const updatedItems = cartItems.filter(item => item.id !== itemId);
       setCartItems(updatedItems);
-      calculateTotal(updatedItems);
+      calculateTotals(updatedItems, discount);
     } catch (error) {
       console.error('Failed to remove item:', error);
-      alert('Failed to remove item');
     }
   };
 
@@ -90,283 +107,343 @@ const CartPage = () => {
     try {
       await cartAPI.clear();
       setCartItems([]);
+      setSubtotal(0);
+      setDiscount(0);
       setTotal(0);
+      setAppliedOffer(null);
+      setPromoCode('');
     } catch (error) {
       console.error('Failed to clear cart:', error);
-      alert('Failed to clear cart');
     }
   };
 
-  const proceedToCheckout = async () => {
+  const applyPromoCode = async () => {
+    if (!promoCode.trim()) {
+      setPromoError('Please enter a promo code');
+      return;
+    }
+
     try {
-      const result = await orderAPI.create();
-      alert(`Order placed successfully! Order ID: ${result.orderId} | Ref: ${result.reference}`);
-      await clearCart();
+      const result = await adsOffersAPI.validatePromoCode(promoCode, subtotal);
+      if (result.valid) {
+        const discountAmount = result.discount || 0;
+        setDiscount(discountAmount);
+        setAppliedOffer(result.offer);
+        calculateTotals(cartItems, discountAmount);
+        setPromoSuccess(`Promo code applied! You saved KES ${discountAmount.toLocaleString()}`);
+        setPromoError('');
+      } else {
+        setPromoError(result.message || 'Invalid promo code');
+        setPromoSuccess('');
+      }
     } catch (error) {
-      console.error('Failed to process order:', error);
-      alert('Failed to place order. Please try again.');
+      setPromoError('Failed to validate promo code');
+    }
+  };
+
+  const removePromoCode = () => {
+    setPromoCode('');
+    setDiscount(0);
+    setAppliedOffer(null);
+    calculateTotals(cartItems, 0);
+    setPromoError('');
+    setPromoSuccess('');
+  };
+
+  const proceedToCheckout = async () => {
+    if (cartItems.length === 0) return;
+
+    setProcessing(true);
+    try {
+      // Navigate to checkout with order details
+      navigate('/checkout', {
+        state: {
+          items: cartItems,
+          subtotal,
+          discount,
+          total,
+          promoCode: appliedOffer?.promoCode,
+        }
+      });
+    } catch (error) {
+      console.error('Failed to proceed to checkout:', error);
+    } finally {
+      setProcessing(false);
     }
   };
 
   if (loading) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '400px',
-        fontSize: '1.2rem',
-        color: '#4caf50'
-      }}>
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          style={{
-            width: '40px',
-            height: '40px',
-            border: '4px solid #e3c770',
-            borderTop: '4px solid #4caf50',
-            borderRadius: '50%',
-            marginRight: '1rem'
-          }}
-        />
-        Loading cart...
-      </div>
+      <Container sx={{ py: 8, textAlign: 'center' }}>
+        <CircularProgress size={60} sx={{ color: '#4caf50' }} />
+        <Typography sx={{ mt: 2 }}>Loading your cart...</Typography>
+      </Container>
     );
   }
 
   if (cartItems.length === 0) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        style={{
-          textAlign: 'center',
-          padding: '4rem 2rem',
-          maxWidth: '600px',
-          margin: '0 auto'
-        }}
-      >
-        <div style={{ fontSize: '4rem', marginBottom: '2rem' }}>🛒</div>
-        <h2 style={{ color: '#4caf50', marginBottom: '1rem' }}>Your Cart is Empty</h2>
-        <p style={{ color: '#666', marginBottom: '2rem', fontSize: '1.1rem' }}>
-          Looks like you haven't added any items to your cart yet.
-        </p>
-        <motion.a
-          href="/products"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          style={{
-            display: 'inline-block',
-            background: 'linear-gradient(120deg, #e3c770 0%, #4caf50 100%)',
-            color: '#fff',
-            padding: '1rem 2rem',
-            borderRadius: '12px',
-            textDecoration: 'none',
-            fontWeight: 'bold',
-            fontSize: '1.1rem'
-          }}
+      <Container maxWidth="md" sx={{ py: 8 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
         >
-          Continue Shopping
-        </motion.a>
-      </motion.div>
+          <Card sx={{ textAlign: 'center', py: 8, borderRadius: 4 }}>
+            <CardContent>
+              <ShoppingCart sx={{ fontSize: 80, color: '#ccc', mb: 2 }} />
+              <Typography variant="h4" sx={{ mb: 2, color: '#4caf50', fontWeight: 'bold' }}>
+                Your Cart is Empty
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+                Looks like you haven't added any items to your cart yet.
+              </Typography>
+              <Button
+                variant="contained"
+                size="large"
+                href="/products"
+                endIcon={<ArrowForward />}
+                sx={{
+                  background: 'linear-gradient(45deg, #4caf50 30%, #81c784 90%)',
+                  px: 4,
+                  py: 1.5,
+                  fontWeight: 'bold',
+                }}
+              >
+                Continue Shopping
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </Container>
     );
   }
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '2rem' }}>
-      <motion.h1
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        style={{
-          fontSize: '2.5rem',
-          color: '#4caf50',
-          textAlign: 'center',
-          marginBottom: '2rem'
-        }}
-      >
-        🛒 Your Shopping Cart
-      </motion.h1>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      {/* Checkout Page Ad */}
+      <AdsBanner position="CHECKOUT_PAGE" />
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-      >
-        {cartItems.map((item, index) => (
-          <motion.div
-            key={item.id}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.1 }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '1.5rem',
-              margin: '1rem 0',
-              background: 'rgba(76, 175, 80, 0.05)',
-              borderRadius: '12px',
-              border: '1px solid rgba(76, 175, 80, 0.2)',
-              gap: '1rem'
-            }}
-          >
-            <img
-              src={item.image}
-              alt={item.productName}
-              style={{
-                width: '80px',
-                height: '80px',
-                objectFit: 'cover',
-                borderRadius: '8px'
-              }}
-            />
-            
-            <div style={{ flex: 1 }}>
-              <h3 style={{ color: '#4caf50', margin: '0 0 0.5rem 0' }}>
-                {item.productName}
-              </h3>
-              <p style={{ color: '#666', margin: 0 }}>
-                ${item.price.toFixed(2)} each
-              </p>
-            </div>
+      <Typography variant="h4" sx={{ mb: 4, fontWeight: 'bold', color: '#4caf50' }}>
+        Shopping Cart ({cartItems.length} items)
+      </Typography>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <button
-                onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                style={{
-                  width: '30px',
-                  height: '30px',
-                  borderRadius: '50%',
-                  border: '2px solid #4caf50',
-                  background: 'transparent',
-                  color: '#4caf50',
-                  cursor: 'pointer',
-                  fontSize: '1.2rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
+      <Grid container spacing={4}>
+        {/* Cart Items */}
+        <Grid item xs={12} lg={8}>
+          <Card sx={{ borderRadius: 3, overflow: 'hidden' }}>
+            {cartItems.map((item, index) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    p: 3,
+                    borderBottom: index < cartItems.length - 1 ? '1px solid #eee' : 'none',
+                    '&:hover': { background: '#f9f9f9' },
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={item.image}
+                    alt={item.productName}
+                    sx={{
+                      width: 100,
+                      height: 100,
+                      objectFit: 'cover',
+                      borderRadius: 2,
+                      mr: 3,
+                    }}
+                  />
+
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                      {item.productName}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      KES {item.price.toLocaleString()} each
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mr: 3 }}>
+                    <IconButton
+                      size="small"
+                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      sx={{ border: '1px solid #4caf50', color: '#4caf50' }}
+                    >
+                      <Remove />
+                    </IconButton>
+                    <Typography sx={{ minWidth: 40, textAlign: 'center', fontWeight: 'bold' }}>
+                      {item.quantity}
+                    </Typography>
+                    <IconButton
+                      size="small"
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      sx={{ border: '1px solid #4caf50', color: '#4caf50' }}
+                    >
+                      <Add />
+                    </IconButton>
+                  </Box>
+
+                  <Box sx={{ textAlign: 'right', minWidth: 120 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#4caf50' }}>
+                      KES {(item.price * item.quantity).toLocaleString()}
+                    </Typography>
+                    <Button
+                      size="small"
+                      color="error"
+                      startIcon={<Delete />}
+                      onClick={() => removeItem(item.id)}
+                      sx={{ mt: 1 }}
+                    >
+                      Remove
+                    </Button>
+                  </Box>
+                </Box>
+              </motion.div>
+            ))}
+          </Card>
+
+          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
+            <Button
+              variant="outlined"
+              href="/products"
+              sx={{ borderColor: '#4caf50', color: '#4caf50' }}
+            >
+              Continue Shopping
+            </Button>
+            <Button
+              variant="outlined"
+              color="error"
+              onClick={clearCart}
+            >
+              Clear Cart
+            </Button>
+          </Box>
+        </Grid>
+
+        {/* Order Summary */}
+        <Grid item xs={12} lg={4}>
+          <Card sx={{ borderRadius: 3, position: 'sticky', top: 20 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 'bold' }}>
+                Order Summary
+              </Typography>
+
+              {/* Promo Code Section */}
+              <Box sx={{ mb: 3 }}>
+                {appliedOffer ? (
+                  <Alert
+                    severity="success"
+                    icon={<CheckCircle />}
+                    action={
+                      <Button size="small" onClick={removePromoCode}>
+                        Remove
+                      </Button>
+                    }
+                  >
+                    <Typography variant="body2">
+                      <strong>{appliedOffer.promoCode}</strong> applied
+                    </Typography>
+                    <Typography variant="caption">
+                      You save KES {discount.toLocaleString()}
+                    </Typography>
+                  </Alert>
+                ) : (
+                  <>
+                    <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        placeholder="Enter promo code"
+                        value={promoCode}
+                        onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                        InputProps={{
+                          startAdornment: <LocalOffer sx={{ color: '#ccc', mr: 1 }} />,
+                        }}
+                      />
+                      <Button
+                        variant="contained"
+                        onClick={applyPromoCode}
+                        sx={{ background: '#4caf50', whiteSpace: 'nowrap' }}
+                      >
+                        Apply
+                      </Button>
+                    </Box>
+                    {promoError && (
+                      <Typography variant="caption" color="error">
+                        {promoError}
+                      </Typography>
+                    )}
+                    {promoSuccess && (
+                      <Typography variant="caption" color="success.main">
+                        {promoSuccess}
+                      </Typography>
+                    )}
+                  </>
+                )}
+              </Box>
+
+              <Divider sx={{ my: 2 }} />
+
+              {/* Price Breakdown */}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography color="text.secondary">Subtotal</Typography>
+                <Typography>KES {subtotal.toLocaleString()}</Typography>
+              </Box>
+
+              {discount > 0 && (
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography color="success.main">Discount</Typography>
+                  <Typography color="success.main">- KES {discount.toLocaleString()}</Typography>
+                </Box>
+              )}
+
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography color="text.secondary">Delivery</Typography>
+                <Chip label="FREE" size="small" color="success" />
+              </Box>
+
+              <Divider sx={{ my: 2 }} />
+
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                  Total
+                </Typography>
+                <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#4caf50' }}>
+                  KES {total.toLocaleString()}
+                </Typography>
+              </Box>
+
+              <Button
+                fullWidth
+                variant="contained"
+                size="large"
+                onClick={proceedToCheckout}
+                disabled={processing || cartItems.length === 0}
+                endIcon={<ArrowForward />}
+                sx={{
+                  background: 'linear-gradient(45deg, #4caf50 30%, #81c784 90%)',
+                  py: 1.5,
+                  fontWeight: 'bold',
                 }}
               >
-                -
-              </button>
-              
-              <span style={{
-                fontSize: '1.2rem',
-                fontWeight: 'bold',
-                minWidth: '2rem',
-                textAlign: 'center'
-              }}>
-                {item.quantity}
-              </span>
-              
-              <button
-                onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                style={{
-                  width: '30px',
-                  height: '30px',
-                  borderRadius: '50%',
-                  border: '2px solid #4caf50',
-                  background: 'transparent',
-                  color: '#4caf50',
-                  cursor: 'pointer',
-                  fontSize: '1.2rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                +
-              </button>
-            </div>
+                {processing ? 'Processing...' : 'Proceed to Checkout'}
+              </Button>
 
-            <div style={{ textAlign: 'right' }}>
-              <p style={{
-                fontSize: '1.2rem',
-                fontWeight: 'bold',
-                color: '#4caf50',
-                margin: '0 0 0.5rem 0'
-              }}>
-                ${(item.price * item.quantity).toFixed(2)}
-              </p>
-              <button
-                onClick={() => removeItem(item.id)}
-                style={{
-                  background: 'transparent',
-                  border: '1px solid #f44336',
-                  color: '#f44336',
-                  padding: '0.3rem 0.8rem',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem'
-                }}
-              >
-                Remove
-              </button>
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        style={{
-          marginTop: '2rem',
-          padding: '2rem',
-          background: 'linear-gradient(120deg, rgba(227, 199, 112, 0.1) 0%, rgba(76, 175, 80, 0.1) 100%)',
-          borderRadius: '12px',
-          textAlign: 'center'
-        }}
-      >
-        <h3 style={{
-          fontSize: '1.8rem',
-          color: '#4caf50',
-          margin: '0 0 1rem 0'
-        }}>
-          Total: ${total.toFixed(2)}
-        </h3>
-        
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={clearCart}
-            style={{
-              background: 'transparent',
-              border: '2px solid #f44336',
-              color: '#f44336',
-              padding: '0.8rem 1.5rem',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '1rem',
-              fontWeight: 'bold'
-            }}
-          >
-            Clear Cart
-          </motion.button>
-          
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={proceedToCheckout}
-            style={{
-              background: 'linear-gradient(120deg, #e3c770 0%, #4caf50 100%)',
-              border: 'none',
-              color: '#fff',
-              padding: '0.8rem 2rem',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '1rem',
-              fontWeight: 'bold',
-              boxShadow: '0 4px 15px rgba(76,175,80,0.3)'
-            }}
-          >
-            Proceed to Checkout
-          </motion.button>
-        </div>
-      </motion.div>
-    </div>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block', textAlign: 'center' }}>
+                Secure checkout powered by M-Pesa & Stripe
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    </Container>
   );
 };
 

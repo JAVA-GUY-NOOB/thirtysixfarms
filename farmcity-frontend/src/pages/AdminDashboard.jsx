@@ -28,6 +28,11 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  TextField,
+  Switch,
+  FormControlLabel,
+  Divider,
+  Tooltip,
 } from '@mui/material';
 import {
   People,
@@ -38,6 +43,12 @@ import {
   Edit,
   CheckCircle,
   LocalShipping,
+  Campaign,
+  LocalOffer,
+  Delete,
+  Add,
+  BarChart as BarChartIcon,
+  LocationOn,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import {
@@ -46,7 +57,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
@@ -55,7 +66,7 @@ import {
   Bar,
   Legend,
 } from 'recharts';
-import { adminAPI } from '../api/farmcityApi';
+import { adminAPI, adsOffersAPI } from '../api/farmcityApi';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -70,6 +81,15 @@ const AdminDashboard = () => {
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [newStatus, setNewStatus] = useState('');
 
+  // Ads & Offers state
+  const [ads, setAds] = useState([]);
+  const [offers, setOffers] = useState([]);
+  const [adStats, setAdStats] = useState(null);
+  const [adDialogOpen, setAdDialogOpen] = useState(false);
+  const [offerDialogOpen, setOfferDialogOpen] = useState(false);
+  const [editingAd, setEditingAd] = useState(null);
+  const [editingOffer, setEditingOffer] = useState(null);
+
   const COLORS = ['#4caf50', '#e3c770', '#ff7043', '#42a5f5', '#ab47bc', '#26a69a'];
 
   useEffect(() => {
@@ -79,12 +99,24 @@ const AdminDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [statsRes, ordersRes, usersRes, revenueRes, countyRes] = await Promise.all([
+      const [
+        statsRes,
+        ordersRes,
+        usersRes,
+        revenueRes,
+        countyRes,
+        adsRes,
+        offersRes,
+        adStatsRes,
+      ] = await Promise.all([
         adminAPI.getDashboardStats(),
         adminAPI.getOrders(),
         adminAPI.getUsers(),
         adminAPI.getRevenueData('month'),
         adminAPI.getOrdersByCounty(),
+        adsOffersAPI.getAllAds().catch(() => []),
+        adsOffersAPI.getAllOffers().catch(() => []),
+        adsOffersAPI.getAdStats().catch(() => null),
       ]);
 
       setStats(statsRes);
@@ -92,6 +124,9 @@ const AdminDashboard = () => {
       setUsers(usersRes || []);
       setRevenueData(revenueRes || []);
       setCountyData(countyRes || []);
+      setAds(adsRes || []);
+      setOffers(offersRes || []);
+      setAdStats(adStatsRes);
     } catch (err) {
       setError('Failed to load dashboard data. Please try again.');
     } finally {
@@ -108,6 +143,58 @@ const AdminDashboard = () => {
       fetchDashboardData();
     } catch (err) {
       setError('Failed to update order status');
+    }
+  };
+
+  // Ad Management
+  const handleSaveAd = async (adData) => {
+    try {
+      if (editingAd) {
+        await adsOffersAPI.updateAd(editingAd.id, adData);
+      } else {
+        await adsOffersAPI.createAd(adData);
+      }
+      setAdDialogOpen(false);
+      setEditingAd(null);
+      fetchDashboardData();
+    } catch (err) {
+      setError('Failed to save advertisement');
+    }
+  };
+
+  const handleDeleteAd = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this advertisement?')) return;
+    try {
+      await adsOffersAPI.deleteAd(id);
+      fetchDashboardData();
+    } catch (err) {
+      setError('Failed to delete advertisement');
+    }
+  };
+
+  // Offer Management
+  const handleSaveOffer = async (offerData) => {
+    try {
+      if (editingOffer) {
+        await adsOffersAPI.updateOffer(editingOffer.id, offerData);
+      } else {
+        await adsOffersAPI.createOffer(offerData);
+      }
+      setOfferDialogOpen(false);
+      setEditingOffer(null);
+      fetchDashboardData();
+    } catch (err) {
+      setError('Failed to save offer');
+    }
+  };
+
+  const handleDeleteOffer = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this offer?')) return;
+    try {
+      await adsOffersAPI.deleteOffer(id);
+      fetchDashboardData();
+    } catch (err) {
+      setError('Failed to delete offer');
     }
   };
 
@@ -171,7 +258,7 @@ const AdminDashboard = () => {
       </Typography>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
           {error}
         </Alert>
       )}
@@ -225,7 +312,7 @@ const AdminDashboard = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="period" />
                 <YAxis />
-                <Tooltip formatter={(value) => `KES ${value.toLocaleString()}`} />
+                <RechartsTooltip formatter={(value) => `KES ${value.toLocaleString()}`} />
                 <Legend />
                 <Line
                   type="monotone"
@@ -261,7 +348,7 @@ const AdminDashboard = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <RechartsTooltip />
               </PieChart>
             </ResponsiveContainer>
           </Paper>
@@ -277,6 +364,8 @@ const AdminDashboard = () => {
         >
           <Tab label={`Orders (${orders.length})`} />
           <Tab label={`Users (${users.length})`} />
+          <Tab label={`Ads (${ads.length})`} />
+          <Tab label={`Offers (${offers.length})`} />
         </Tabs>
 
         {/* Orders Tab */}
@@ -376,6 +465,206 @@ const AdminDashboard = () => {
             </TableContainer>
           </Box>
         )}
+
+        {/* Ads Tab */}
+        {activeTab === 2 && (
+          <Box sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                Advertisements Management
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => {
+                  setEditingAd(null);
+                  setAdDialogOpen(true);
+                }}
+                sx={{ background: '#4caf50' }}
+              >
+                Add Advertisement
+              </Button>
+            </Box>
+
+            {adStats && (
+              <Grid container spacing={2} sx={{ mb: 3 }}>
+                <Grid item xs={6} md={3}>
+                  <Card sx={{ textAlign: 'center', p: 2 }}>
+                    <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#4caf50' }}>
+                      {adStats.totalAds}
+                    </Typography>
+                    <Typography variant="body2">Total Ads</Typography>
+                  </Card>
+                </Grid>
+                <Grid item xs={6} md={3}>
+                  <Card sx={{ textAlign: 'center', p: 2 }}>
+                    <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#e3c770' }}>
+                      {adStats.totalImpressions?.toLocaleString()}
+                    </Typography>
+                    <Typography variant="body2">Impressions</Typography>
+                  </Card>
+                </Grid>
+                <Grid item xs={6} md={3}>
+                  <Card sx={{ textAlign: 'center', p: 2 }}>
+                    <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#ff7043' }}>
+                      {adStats.totalClicks?.toLocaleString()}
+                    </Typography>
+                    <Typography variant="body2">Clicks</Typography>
+                  </Card>
+                </Grid>
+                <Grid item xs={6} md={3}>
+                  <Card sx={{ textAlign: 'center', p: 2 }}>
+                    <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#42a5f5' }}>
+                      {adStats.clickThroughRate}%
+                    </Typography>
+                    <Typography variant="body2">CTR</Typography>
+                  </Card>
+                </Grid>
+              </Grid>
+            )}
+
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Title</TableCell>
+                    <TableCell>Position</TableCell>
+                    <TableCell>Type</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Impressions</TableCell>
+                    <TableCell>Clicks</TableCell>
+                    <TableCell>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {ads.map((ad) => (
+                    <TableRow key={ad.id}>
+                      <TableCell>
+                        <Typography fontWeight="bold">{ad.title}</Typography>
+                      </TableCell>
+                      <TableCell>{ad.position}</TableCell>
+                      <TableCell>
+                        <Chip label={ad.adType} size="small" />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={ad.isActive ? 'Active' : 'Inactive'}
+                          color={ad.isActive ? 'success' : 'default'}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>{ad.impressions?.toLocaleString() || 0}</TableCell>
+                      <TableCell>{ad.clicks?.toLocaleString() || 0}</TableCell>
+                      <TableCell>
+                        <IconButton
+                          onClick={() => {
+                            setEditingAd(ad);
+                            setAdDialogOpen(true);
+                          }}
+                          sx={{ color: '#4caf50' }}
+                        >
+                          <Edit />
+                        </IconButton>
+                        <IconButton
+                          onClick={() => handleDeleteAd(ad.id)}
+                          sx={{ color: '#f44336' }}
+                        >
+                          <Delete />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
+        )}
+
+        {/* Offers Tab */}
+        {activeTab === 3 && (
+          <Box sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                Promotional Offers
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => {
+                  setEditingOffer(null);
+                  setOfferDialogOpen(true);
+                }}
+                sx={{ background: '#4caf50' }}
+              >
+                Create Offer
+              </Button>
+            </Box>
+
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Title</TableCell>
+                    <TableCell>Promo Code</TableCell>
+                    <TableCell>Type</TableCell>
+                    <TableCell>Discount</TableCell>
+                    <TableCell>Usage</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {offers.map((offer) => (
+                    <TableRow key={offer.id}>
+                      <TableCell>
+                        <Typography fontWeight="bold">{offer.title}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip label={offer.promoCode} color="primary" size="small" />
+                      </TableCell>
+                      <TableCell>{offer.offerType}</TableCell>
+                      <TableCell>
+                        {offer.discountPercentage
+                          ? `${offer.discountPercentage}%`
+                          : offer.discountAmount
+                          ? `KES ${offer.discountAmount}`
+                          : 'N/A'}
+                      </TableCell>
+                      <TableCell>
+                        {offer.usageCount || 0}
+                        {offer.usageLimit && ` / ${offer.usageLimit}`}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={offer.isActive ? 'Active' : 'Inactive'}
+                          color={offer.isActive ? 'success' : 'default'}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <IconButton
+                          onClick={() => {
+                            setEditingOffer(offer);
+                            setOfferDialogOpen(true);
+                          }}
+                          sx={{ color: '#4caf50' }}
+                        >
+                          <Edit />
+                        </IconButton>
+                        <IconButton
+                          onClick={() => handleDeleteOffer(offer.id)}
+                          sx={{ color: '#f44336' }}
+                        >
+                          <Delete />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
+        )}
       </Paper>
 
       {/* Status Update Dialog */}
@@ -408,7 +697,396 @@ const AdminDashboard = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Ad Dialog */}
+      <AdDialog
+        open={adDialogOpen}
+        onClose={() => {
+          setAdDialogOpen(false);
+          setEditingAd(null);
+        }}
+        onSave={handleSaveAd}
+        ad={editingAd}
+      />
+
+      {/* Offer Dialog */}
+      <OfferDialog
+        open={offerDialogOpen}
+        onClose={() => {
+          setOfferDialogOpen(false);
+          setEditingOffer(null);
+        }}
+        onSave={handleSaveOffer}
+        offer={editingOffer}
+      />
     </Container>
+  );
+};
+
+// Ad Dialog Component
+const AdDialog = ({ open, onClose, onSave, ad }) => {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    imageUrl: '',
+    targetUrl: '',
+    position: 'HOME_BANNER',
+    adType: 'PROMOTIONAL',
+    backgroundColor: '#4caf50',
+    textColor: '#ffffff',
+    isActive: true,
+    priority: 0,
+  });
+
+  useEffect(() => {
+    if (ad) {
+      setFormData({
+        title: ad.title || '',
+        description: ad.description || '',
+        imageUrl: ad.imageUrl || '',
+        targetUrl: ad.targetUrl || '',
+        position: ad.position || 'HOME_BANNER',
+        adType: ad.adType || 'PROMOTIONAL',
+        backgroundColor: ad.backgroundColor || '#4caf50',
+        textColor: ad.textColor || '#ffffff',
+        isActive: ad.isActive ?? true,
+        priority: ad.priority || 0,
+      });
+    } else {
+      setFormData({
+        title: '',
+        description: '',
+        imageUrl: '',
+        targetUrl: '',
+        position: 'HOME_BANNER',
+        adType: 'PROMOTIONAL',
+        backgroundColor: '#4caf50',
+        textColor: '#ffffff',
+        isActive: true,
+        priority: 0,
+      });
+    }
+  }, [ad, open]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <form onSubmit={handleSubmit}>
+        <DialogTitle>{ad ? 'Edit Advertisement' : 'Create Advertisement'}</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Title"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                multiline
+                rows={2}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Image URL"
+                value={formData.imageUrl}
+                onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Target URL"
+                value={formData.targetUrl}
+                onChange={(e) => setFormData({ ...formData, targetUrl: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Position</InputLabel>
+                <Select
+                  value={formData.position}
+                  onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                  label="Position"
+                >
+                  <MenuItem value="HOME_BANNER">Home Banner</MenuItem>
+                  <MenuItem value="HOME_SIDEBAR">Home Sidebar</MenuItem>
+                  <MenuItem value="PRODUCT_PAGE">Product Page</MenuItem>
+                  <MenuItem value="CHECKOUT_PAGE">Checkout Page</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Ad Type</InputLabel>
+                <Select
+                  value={formData.adType}
+                  onChange={(e) => setFormData({ ...formData, adType: e.target.value })}
+                  label="Ad Type"
+                >
+                  <MenuItem value="PROMOTIONAL">Promotional</MenuItem>
+                  <MenuItem value="EXTERNAL_AD">External Ad</MenuItem>
+                  <MenuItem value="INTERNAL_FEATURE">Internal Feature</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                type="color"
+                label="Background Color"
+                value={formData.backgroundColor}
+                onChange={(e) => setFormData({ ...formData, backgroundColor: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                type="color"
+                label="Text Color"
+                value={formData.textColor}
+                onChange={(e) => setFormData({ ...formData, textColor: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Priority"
+                value={formData.priority}
+                onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={formData.isActive}
+                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                  />
+                }
+                label="Active"
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="contained" sx={{ background: '#4caf50' }}>
+            {ad ? 'Update' : 'Create'}
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
+  );
+};
+
+// Offer Dialog Component
+const OfferDialog = ({ open, onClose, onSave, offer }) => {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    promoCode: '',
+    offerType: 'PERCENTAGE',
+    discountPercentage: 10,
+    discountAmount: 0,
+    minimumOrderAmount: 0,
+    maxDiscount: null,
+    usageLimit: null,
+    isActive: true,
+    displayOnHomepage: true,
+  });
+
+  useEffect(() => {
+    if (offer) {
+      setFormData({
+        title: offer.title || '',
+        description: offer.description || '',
+        promoCode: offer.promoCode || '',
+        offerType: offer.offerType || 'PERCENTAGE',
+        discountPercentage: offer.discountPercentage || 0,
+        discountAmount: offer.discountAmount || 0,
+        minimumOrderAmount: offer.minimumOrderAmount || 0,
+        maxDiscount: offer.maxDiscount || '',
+        usageLimit: offer.usageLimit || '',
+        isActive: offer.isActive ?? true,
+        displayOnHomepage: offer.displayOnHomepage ?? true,
+      });
+    } else {
+      setFormData({
+        title: '',
+        description: '',
+        promoCode: '',
+        offerType: 'PERCENTAGE',
+        discountPercentage: 10,
+        discountAmount: 0,
+        minimumOrderAmount: 0,
+        maxDiscount: '',
+        usageLimit: '',
+        isActive: true,
+        displayOnHomepage: true,
+      });
+    }
+  }, [offer, open]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const data = {
+      ...formData,
+      maxDiscount: formData.maxDiscount ? parseFloat(formData.maxDiscount) : null,
+      usageLimit: formData.usageLimit ? parseInt(formData.usageLimit) : null,
+    };
+    onSave(data);
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <form onSubmit={handleSubmit}>
+        <DialogTitle>{offer ? 'Edit Offer' : 'Create Offer'}</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Title"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                multiline
+                rows={2}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Promo Code"
+                value={formData.promoCode}
+                onChange={(e) => setFormData({ ...formData, promoCode: e.target.value.toUpperCase() })}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Offer Type</InputLabel>
+                <Select
+                  value={formData.offerType}
+                  onChange={(e) => setFormData({ ...formData, offerType: e.target.value })}
+                  label="Offer Type"
+                >
+                  <MenuItem value="PERCENTAGE">Percentage Discount</MenuItem>
+                  <MenuItem value="FIXED_AMOUNT">Fixed Amount</MenuItem>
+                  <MenuItem value="FREE_SHIPPING">Free Shipping</MenuItem>
+                  <MenuItem value="BUY_ONE_GET_ONE">Buy One Get One</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            {formData.offerType === 'PERCENTAGE' && (
+              <>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="Discount Percentage"
+                    value={formData.discountPercentage}
+                    onChange={(e) => setFormData({ ...formData, discountPercentage: parseFloat(e.target.value) || 0 })}
+                    InputProps={{ inputProps: { min: 0, max: 100 } }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="Maximum Discount (optional)"
+                    value={formData.maxDiscount}
+                    onChange={(e) => setFormData({ ...formData, maxDiscount: e.target.value })}
+                    placeholder="No limit"
+                  />
+                </Grid>
+              </>
+            )}
+            {formData.offerType === 'FIXED_AMOUNT' && (
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Discount Amount (KES)"
+                  value={formData.discountAmount}
+                  onChange={(e) => setFormData({ ...formData, discountAmount: parseFloat(e.target.value) || 0 })}
+                />
+              </Grid>
+            )}
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Minimum Order Amount (KES)"
+                value={formData.minimumOrderAmount}
+                onChange={(e) => setFormData({ ...formData, minimumOrderAmount: parseFloat(e.target.value) || 0 })}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Usage Limit (optional)"
+                value={formData.usageLimit}
+                onChange={(e) => setFormData({ ...formData, usageLimit: e.target.value })}
+                placeholder="Unlimited"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.isActive}
+                      onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                    />
+                  }
+                  label="Active"
+                />
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.displayOnHomepage}
+                      onChange={(e) => setFormData({ ...formData, displayOnHomepage: e.target.checked })}
+                    />
+                  }
+                  label="Display on Homepage"
+                />
+              </Box>
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="contained" sx={{ background: '#4caf50' }}>
+            {offer ? 'Update' : 'Create'}
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
   );
 };
 

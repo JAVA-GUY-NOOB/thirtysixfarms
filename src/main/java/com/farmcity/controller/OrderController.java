@@ -19,6 +19,7 @@ import com.farmcity.entity.CartItem;
 import com.farmcity.entity.CustomerOrder;
 import com.farmcity.entity.OrderItem;
 import com.farmcity.repository.CustomerOrderRepository;
+import com.farmcity.repository.UserAccountRepository;
 import com.farmcity.service.CartService;
 
 @RestController
@@ -27,11 +28,13 @@ import com.farmcity.service.CartService;
 public class OrderController {
     private final CustomerOrderRepository orderRepository;
     private final CartService cartService;
+    private final UserAccountRepository userAccountRepository;
     private final SecureRandom random = new SecureRandom();
 
-    public OrderController(CustomerOrderRepository orderRepository, CartService cartService) {
+    public OrderController(CustomerOrderRepository orderRepository, CartService cartService, UserAccountRepository userAccountRepository) {
         this.orderRepository = orderRepository;
         this.cartService = cartService;
+        this.userAccountRepository = userAccountRepository;
     }
 
     @GetMapping
@@ -47,6 +50,37 @@ public class OrderController {
         return orderRepository.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<CustomerOrder>> getByUserId(@PathVariable Long userId) {
+        List<CustomerOrder> orders = orderRepository.findByUserId(userId);
+        return ResponseEntity.ok(orders);
+    }
+
+    @GetMapping("/my-orders")
+    public ResponseEntity<?> getMyOrders(@org.springframework.web.bind.annotation.RequestHeader(value = "Authorization", required = false) String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+        }
+
+        String token = authHeader.substring(7);
+        String username = com.farmcity.config.JwtUtil.extractUsername(token);
+
+        if (!com.farmcity.config.JwtUtil.validateToken(token, username)) {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid token"));
+        }
+
+        // Find user by username and get their orders
+        com.farmcity.entity.UserAccount user = userAccountRepository.findByUsername(username)
+                .orElse(null);
+
+        if (user == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+        }
+
+        List<CustomerOrder> orders = orderRepository.findByUserId(user.getId());
+        return ResponseEntity.ok(orders);
     }
 
     @PostMapping
