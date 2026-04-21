@@ -20,36 +20,24 @@ const GoogleMapPicker = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Load Google Maps API
-  useEffect(() => {
-    if (!apiKey) {
-      setError('Google Maps API key not configured');
-      setLoading(false);
-      return;
-    }
+  // Reverse geocode to get address
+  const reverseGeocode = useCallback((lat, lng) => {
+    if (!window.google) return;
 
-    const loadGoogleMaps = () => {
-      if (window.google && window.google.maps) {
-        initMap();
-        return;
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+      if (status === 'OK' && results[0]) {
+        const newAddress = results[0].formatted_address;
+        setAddress(newAddress);
+        if (onLocationSelect) {
+          onLocationSelect({ lat, lng, address: newAddress });
+        }
       }
+    });
+  }, [onLocationSelect]);
 
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-      script.async = true;
-      script.defer = true;
-      script.onload = initMap;
-      script.onerror = () => {
-        setError('Failed to load Google Maps');
-        setLoading(false);
-      };
-      document.head.appendChild(script);
-    };
-
-    loadGoogleMaps();
-  }, [apiKey]);
-
-  const initMap = () => {
+  // Load Google Maps API
+  const initMap = useCallback(() => {
     if (!window.google) return;
 
     const mapInstance = new window.google.maps.Map(document.getElementById('google-map-container'), {
@@ -97,23 +85,35 @@ const GoogleMapPicker = ({
     }
 
     setLoading(false);
-  };
+  }, [initialPosition, readOnly, showRoute, reverseGeocode]);
 
-  // Reverse geocode to get address
-  const reverseGeocode = useCallback((lat, lng) => {
-    if (!window.google) return;
+  useEffect(() => {
+    if (!apiKey) {
+      setError('Google Maps API key not configured');
+      setLoading(false);
+      return;
+    }
 
-    const geocoder = new window.google.maps.Geocoder();
-    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-      if (status === 'OK' && results[0]) {
-        const newAddress = results[0].formatted_address;
-        setAddress(newAddress);
-        if (onLocationSelect) {
-          onLocationSelect({ lat, lng, address: newAddress });
-        }
+    const loadGoogleMaps = () => {
+      if (window.google && window.google.maps) {
+        initMap();
+        return;
       }
-    });
-  }, [onLocationSelect]);
+
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      script.onload = initMap;
+      script.onerror = () => {
+        setError('Failed to load Google Maps');
+        setLoading(false);
+      };
+      document.head.appendChild(script);
+    };
+
+    loadGoogleMaps();
+  }, [apiKey, initMap]);
 
   // Geocode address to get coordinates
   const geocodeAddress = useCallback(() => {

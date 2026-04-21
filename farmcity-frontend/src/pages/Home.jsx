@@ -10,7 +10,6 @@ import {
   Card,
   CardContent,
   Chip,
-  Paper,
 } from '@mui/material';
 import { ShoppingCart, LocalShipping, Verified, Agriculture } from '@mui/icons-material';
 import RiceCard from '../components/RiceCard';

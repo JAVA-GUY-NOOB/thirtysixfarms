@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Container, Typography, IconButton } from '@mui/material';
 import { Close, ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,11 +9,7 @@ const AdsBanner = ({ position = 'HOME_BANNER' }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [dismissed, setDismissed] = useState(false);
 
-  useEffect(() => {
-    fetchAds();
-  }, [position]);
-
-  const fetchAds = async () => {
+  const fetchAds = useCallback(async () => {
     try {
       const data = await adsOffersAPI.getActiveAds(position);
       setAds(data || []);
@@ -24,7 +20,11 @@ const AdsBanner = ({ position = 'HOME_BANNER' }) => {
     } catch (err) {
       console.error('Failed to fetch ads:', err);
     }
-  };
+  }, [position]);
+
+  useEffect(() => {
+    fetchAds();
+  }, [fetchAds]);
 
   const recordImpression = async (adId) => {
     try {

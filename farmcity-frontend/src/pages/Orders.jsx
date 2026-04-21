@@ -38,7 +38,7 @@ import { useAuth } from '../context/AuthContext';
 import { orderAPI } from '../api/farmcityApi';
 
 const Orders = () => {
-  const { user } = useAuth();
+  useAuth(); // Verify authentication
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

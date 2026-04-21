@@ -31,24 +31,15 @@ import {
   TextField,
   Switch,
   FormControlLabel,
-  Divider,
-  Tooltip,
 } from '@mui/material';
 import {
   People,
   ShoppingCart,
   AttachMoney,
   TrendingUp,
-  Visibility,
   Edit,
-  CheckCircle,
-  LocalShipping,
-  Campaign,
-  LocalOffer,
   Delete,
   Add,
-  BarChart as BarChartIcon,
-  LocationOn,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import {
@@ -62,8 +53,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  BarChart,
-  Bar,
   Legend,
 } from 'recharts';
 import { adminAPI, adsOffersAPI } from '../api/farmcityApi';

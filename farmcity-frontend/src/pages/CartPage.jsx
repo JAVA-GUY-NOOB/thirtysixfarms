@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -14,7 +14,6 @@ import {
   Divider,
   Chip,
   Alert,
-  Paper,
   CircularProgress,
 } from '@mui/material';
 import {
@@ -26,7 +25,7 @@ import {
   LocalOffer,
   CheckCircle,
 } from '@mui/icons-material';
-import { cartAPI, orderAPI, adsOffersAPI } from '../api/farmcityApi';
+import { cartAPI, adsOffersAPI } from '../api/farmcityApi';
 import AdsBanner from '../components/AdsBanner';
 
 const CartPage = () => {
@@ -42,11 +41,15 @@ const CartPage = () => {
   const [appliedOffer, setAppliedOffer] = useState(null);
   const [processing, setProcessing] = useState(false);
 
-  useEffect(() => {
-    fetchCartItems();
+  const calculateTotals = useCallback((items, discountAmount = 0) => {
+    const sub = items.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
+    setSubtotal(sub);
+    const disc = Math.min(discountAmount, sub);
+    setDiscount(disc);
+    setTotal(sub - disc);
   }, []);
 
-  const fetchCartItems = async () => {
+  const fetchCartItems = useCallback(async () => {
     try {
       setLoading(true);
       const items = await cartAPI.getItems();
@@ -67,15 +70,11 @@ const CartPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [calculateTotals, discount]);
 
-  const calculateTotals = (items, discountAmount = 0) => {
-    const sub = items.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
-    setSubtotal(sub);
-    const disc = Math.min(discountAmount, sub);
-    setDiscount(disc);
-    setTotal(sub - disc);
-  };
+  useEffect(() => {
+    fetchCartItems();
+  }, [fetchCartItems]);
 
   const updateQuantity = async (itemId, newQuantity) => {
     if (newQuantity < 1) return;
