@@ -4,7 +4,10 @@
       "Read(//c/tmp/**)",
       "Bash(tar -xzf maven.tar.gz)",
       "Bash(git add:*)",
-      "Bash(git commit -m ':*)"
+      "Bash(git commit -m ':*)",
+      "Bash(npm start:*)",
+      "Bash(curl -fsSL \"https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.zip\" -o maven.zip)",
+      "Bash(unzip -q maven.zip)"
     ]
   }
 }
