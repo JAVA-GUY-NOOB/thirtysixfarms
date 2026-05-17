@@ -257,7 +257,7 @@ This project is proprietary and confidential. Unauthorized distribution is prohi
 For support, email support@farmcity.com or create an issue in the repository.
 
 ---
-
+ n
 **Built with ❤️ for Kenyan Farmers**
 
 Copyright © 2026 FarmCity. All rights reserved.
