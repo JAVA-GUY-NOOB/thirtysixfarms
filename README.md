@@ -125,9 +125,21 @@ farmcity/
    - Backend API: http://localhost:8080
    - Admin Panel: http://localhost:3000/admin
 
-### Default Credentials
-- **Admin User**: admin / admin123
+### Default Local Admin Credentials
+For local development and manual admin testing, the app auto-creates a default admin account when `APP_BOOTSTRAP_ADMIN=true` and the profile is not `prod`.
+
+- **Admin User**: `admin` / `admin123`
+- **Admin Email**: `admin@farmcity.local`
 - **Regular User**: Create via registration
+
+Set these values in your local environment if you want to override the default admin bootstrap:
+
+```env
+APP_BOOTSTRAP_ADMIN=true
+APP_ADMIN_USERNAME=admin
+APP_ADMIN_EMAIL=admin@farmcity.local
+APP_ADMIN_PASSWORD=admin123
+```
 
 ## 🧪 Running Tests
 
@@ -172,29 +184,45 @@ cd farmcity-frontend && npm run build
 ## 🔐 Environment Variables
 
 ### Backend
-```properties
+```env
+SPRING_PROFILES_ACTIVE=prod
+
 # Database
-SUPABASE_DB_URL=jdbc:postgresql://...
-SUPABASE_DB_USER=postgres
-SUPABASE_DB_PASSWORD=***
+SUPABASE_DB_URL=jdbc:postgresql://<host>:5432/<db>
+SUPABASE_DB_USER=<user>
+SUPABASE_DB_PASSWORD=<password>
 
 # Security
-JWT_SECRET_KEY=your-secret-key
+JWT_SECRET_KEY=<your-secret-key>
+JWT_EXPIRATION=86400000
 
 # Payments
-STRIPE_API_KEY=sk_live_...
-MPESA_CONSUMER_KEY=...
-MPESA_CONSUMER_SECRET=...
+STRIPE_API_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+MPESA_CONSUMER_KEY=<consumer-key>
+MPESA_CONSUMER_SECRET=<consumer-secret>
+MPESA_SHORTCODE=<shortcode>
+MPESA_PASSKEY=<passkey>
+MPESA_CALLBACK_URL=https://<your-domain>/api/mpesa/callback
+MPESA_ENVIRONMENT=production
+MPESA_BASE_URL=https://api.safaricom.co.ke
 
 # Maps
-GOOGLE_MAPS_API_KEY=...
+GOOGLE_MAPS_API_KEY=<your-google-maps-key>
+
+# Local admin bootstrap (development only)
+APP_BOOTSTRAP_ADMIN=true
+APP_ADMIN_USERNAME=admin
+APP_ADMIN_EMAIL=admin@farmcity.local
+APP_ADMIN_PASSWORD=admin123
 ```
 
 ### Frontend
 ```env
-REACT_APP_API_BASE_URL=https://api.your-domain.com
-REACT_APP_GOOGLE_MAPS_API_KEY=...
-REACT_APP_STRIPE_PUBLIC_KEY=pk_live_...
+REACT_APP_API_BASE_URL=http://localhost:8080
+REACT_APP_GOOGLE_MAPS_API_KEY=<your-google-maps-key>
+REACT_APP_STRIPE_PUBLIC_KEY=pk_test_...
+REACT_APP_ENV=development
 ```
 
 ## 📊 API Documentation
