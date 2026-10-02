@@ -1,14 +1,14 @@
 # Multi-stage Dockerfile for backend
 
 # Build stage
-FROM maven:3.9.4-eclipse-temurin-21 AS build
+FROM maven:3.9.15-eclipse-temurin-25 AS build
 WORKDIR /workspace
 COPY pom.xml mvnw ./.mvn/ ./
 COPY src ./src
 RUN mvn -B -DskipTests package
 
 # Run stage
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:25-jre
 WORKDIR /app
 COPY --from=build /workspace/target/farmcity-ecommerce-0.0.1-SNAPSHOT.jar /app/app.jar
 EXPOSE 8080

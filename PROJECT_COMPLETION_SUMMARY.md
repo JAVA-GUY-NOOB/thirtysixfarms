@@ -177,7 +177,7 @@ FarmCity E-Commerce Platform is a complete online store solution for premium ric
 
 ### Backend (Spring Boot 3.5)
 ```
-Java 21
+Java 25
 ├── Security: JWT + Spring Security
 ├── Database: PostgreSQL (prod) / H2 (dev)
 ├── ORM: Spring Data JPA

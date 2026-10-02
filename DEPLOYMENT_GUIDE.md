@@ -8,7 +8,7 @@ This is a comprehensive e-commerce platform for FarmCity Rice with full-stack in
 
 ### Backend (Spring Boot)
 - **JAR File**: `target/farmcity-ecommerce-0.0.1-SNAPSHOT.jar` (57 MB)
-- **Java Version**: 21+
+- **Java Version**: 25+
 - **Database**: H2 (dev) / PostgreSQL (production/Supabase)
 
 ### Frontend (React)
@@ -86,7 +86,7 @@ vercel --prod
 
 ```dockerfile
 # Dockerfile
-FROM openjdk:21-jdk-slim
+FROM eclipse-temurin:25-jre
 COPY target/farmcity-ecommerce-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "/app.jar"]
@@ -217,7 +217,7 @@ npm test
 ### Common Issues
 
 **Backend won't start**
-- Check Java 21+ is installed
+- Check Java 25+ is installed
 - Verify port 8080 is available
 - Check database connection
 

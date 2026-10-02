@@ -83,7 +83,7 @@ farmcity/
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Java 17+
+- Java 25+
 - Node.js 18+
 - PostgreSQL 14+ (or use H2 for development)
 - M-Pesa developer account (for payments)

@@ -113,7 +113,7 @@ This guide provides comprehensive instructions for deploying the FarmCity E-Comm
 
 #### Prerequisites
 - Ubuntu 20.04+ or CentOS 8+
-- Java 17+
+- Java 25+
 - Node.js 18+
 - Nginx
 - PostgreSQL 14+
@@ -123,7 +123,7 @@ This guide provides comprehensive instructions for deploying the FarmCity E-Comm
 1. **Install Dependencies**:
    ```bash
    sudo apt update
-   sudo apt install -y openjdk-17-jdk nodejs npm nginx postgresql-14
+   sudo apt install -y openjdk-25-jdk nodejs npm nginx postgresql-14
    ```
 
 2. **Setup PostgreSQL**:
